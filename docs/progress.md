@@ -15,8 +15,8 @@
 | 2 | Bluetooth方式確認（Classic/BLE） | ⬜ 未着手 | |
 | 3 | Android HCI Snoop Logで通信記録 | ✅ 完了 | 開発者向けオプションでHCI snoop logをON、Bluetooth再起動済み |
 | 4 | 通信キャプチャ用テスト実施（文字/QR/画像） | 🟡 進行中 | 文字テスト（T01〜T08, Q01, Q03）完了。画像テスト（I01〜I06）は端末性能問題で保留 |
-| 5 | HCIログをPCへ取得 | 🟡 進行中 | 端末がAndroid 7.0のため `/sdcard/btsnoop_hci.log` を直接取得する方針を案内中 |
-| 6 | Wiresharkで通信解析 | ⬜ 未着手 | |
+| 5 | HCIログをPCへ取得 | ✅ 完了 | ADB経由で `/sdcard/mtklog/btlog/btsnoop_hci.log`（MediaTekチップ機種特有のパス）を取得。約230KB |
+| 6 | Wiresharkで通信解析 | 🟡 進行中 | ログファイルの共有を依頼中 |
 | 7 | GATT・Write先を特定 | ⬜ 未着手 | `docs/bluetooth_gatt.md` |
 | 8 | 印刷データ抽出（captures/配下） | ⬜ 未着手 | |
 | 9 | 文字通信を解析 | ⬜ 未着手 | |
@@ -50,6 +50,7 @@
 | 2026-08-25 | 解析用Android端末 | 手持ちの古い端末（Android 7.0、HCI Snoop Log項目あり）を使用。Playストアのログイン不具合はプリンター付属QRコード経由のページアクセス後、Googleアカウント再追加で解消し、専用アプリ「Luck Jingle」のインストールに成功 | ユーザー確認 |
 | 2026-08-25 | プリンター給紙不良への対応方針 | 印刷ボタン押下でヘッド動作音はあるが給紙されない症状を確認（別端末でも再現、バッテリーは十分）。ハードウェア（給紙モーター等）側の問題と切り分け、Bluetooth通信キャプチャ自体は紙送りの成否に関わらず続行する | ユーザー確認・切り分け結果 |
 | 2026-08-25 | QRコード印刷方式 | 専用アプリ「Luck Jingle」にQRコード印刷機能が存在しないことを確認。プリンター側の専用QRコマンドの検証は不可能なため、Python実装ではQRコードを自前生成し画像印刷プロトコルで送信する方式に確定 | ユーザーによるアプリ画面確認（アニメのポートレート/ノートエディタ/スキャン/web印刷/テキスト印刷/バナー印刷/間違いを印刷/OCR/画像/ジグゾー印刷/素材のみでQR項目なし） |
+| 2026-08-26 | HCI Snoop Logの保存場所 | 解析用端末（MediaTekチップ搭載）では、標準的な `/sdcard/btsnoop_hci.log` ではなく `/sdcard/mtklog/btlog/btsnoop_hci.log` に保存されることが判明。ADB経由で取得成功（約230KB） | `adb shell find` / `adb shell ls` による調査結果 |
 
 ---
 
