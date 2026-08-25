@@ -93,6 +93,13 @@ Bluetooth ClassicはPython標準ライブラリの`socket.AF_BLUETOOTH`を使用
 2. 上記が解決すれば、QR・画像印刷も文字印刷と同様に実用化できるはずです（プロトコル自体は解明済み）
 3. `docs/protocol_spec.md`の未確定事項（フッターの意味等）を埋めると、より頑健な実装にできます
 
+## 報告書
+
+手順書作成者向けに、調査結果をまとめた報告書を作成しました。
+
+- Webページ版（共有しやすい形式）: https://claude.ai/code/artifact/428aedc1-f2aa-4f12-b885-0b0c2b8f8545
+- リポジトリ内の同内容: [`docs/report.html`](report.html)（ブラウザで直接開けます）
+
 ## 連絡先・引き継ぎ事項
 
 このプロジェクトは Claude（Anthropic の AI アシスタント）との対話を通じて、
