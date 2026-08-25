@@ -43,7 +43,7 @@ def to_1bit_bitmap(image: Image.Image, dither: bool = True) -> bytes:
     return bytes(out)
 
 
-DEFAULT_FONT_SIZE = 56  # 実キャプチャ(captures/rfcomm_jobs/job_00.bin、文字"A")の実測グリフ高さ(約45px)を参考に設定
+DEFAULT_FONT_SIZE = 72  # 実機テストで56pxは読めるが小さめとのフィードバックを受けて拡大
 
 # 日本語を含む文字列を印刷できるよう、主要OSにプリインストールされている日本語フォントを探す。
 # 見つからない場合はPILの既定フォント（英数字のみ）にフォールバックする。
