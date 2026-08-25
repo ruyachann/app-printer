@@ -43,11 +43,14 @@ def to_1bit_bitmap(image: Image.Image, dither: bool = True) -> bytes:
     return bytes(out)
 
 
-def text_to_bitmap(text: str, font: ImageFont.FreeTypeFont | None = None,
+DEFAULT_FONT_SIZE = 32  # 384px幅の感熱紙で肉眼で読める大きさ（load_default()の既定は小さすぎる）
+
+
+def text_to_bitmap(text: str, font: ImageFont.ImageFont | None = None, font_size: int = DEFAULT_FONT_SIZE,
                     line_spacing: int = 4, margin: int = 4) -> bytes:
     """文字列を描画して1bitビットマップに変換する。"""
     if font is None:
-        font = ImageFont.load_default()
+        font = ImageFont.load_default(size=font_size)
 
     lines = text.split("\n") or [""]
     dummy = Image.new("L", (WIDTH_PX, 10), 255)

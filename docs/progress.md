@@ -26,14 +26,14 @@
 | 13 | パケット分割方式を解析 | ✅ 完了 | RFCOMM UIHフレーム、約240 bytesごとに分割されることを確認 |
 | 14 | プロトコル仕様書作成 | ✅ 完了 | `docs/protocol_spec.md` に確定版を記載（チェックサム有無等の細部のみ未確定） |
 | 15 | Python環境構築（venv, pillow, qrcode, ※bleak不使用） | ✅ 完了（このセッション上） | `requirements.txt` に `pillow`/`qrcode`/`pytest` を記載（Bluetooth接続は標準ライブラリの`socket.AF_BLUETOOTH`を使用するため追加ライブラリ不要）。pillow/qrcode/pytestは動作確認済み |
-| 16 | PythonからBluetooth接続確認 | ⚠️ 未実施（実機環境が必要） | `printer/bluetooth.py` 実装済みだが、クラウド実行環境のためBluetoothハードウェアがなく接続テスト不可。引き渡し先での実施が必要 |
-| 17 | キャプチャデータをそのまま送信して再現確認 | ✅ 完了（データレベルで検証） | `tests/test_protocol_replay.py` で `protocol.build_print_command()` が実キャプチャのバイト列を完全に再現することを確認済み（実送信は16と同様に実機待ち） |
+| 16 | PythonからBluetooth接続確認 | ✅ 完了（ユーザーPCで実施） | Windows実機で`printer.connect()`成功。生ソケットはタイムアウトしたため、Windowsの仮想COMポート（出力側=COM4）経由のpyserial接続に変更して解決 |
+| 17 | キャプチャデータをそのまま送信して再現確認 | ✅ 完了（データ検証＋実送信とも完了） | `tests/test_protocol_replay.py`でバイト列一致を確認済み。さらに実機へ`print_text("Hello from Python")`を送信し、**純正アプリと全く同じ印字動作音を確認**（給紙不良自体は別のハードウェア問題として既知） |
 | 18 | Pythonプロトコル実装（printer/配下） | ✅ 完了 | `bluetooth.py`（RFCOMM接続）/`protocol.py`（ヘッダー生成）/`image.py`（1bit変換）/`qr.py`/`printer.py` 全て実装済み |
 | 19 | 文字印刷実装 | ✅ 完了 | `printer.print_text()`。生成結果を目視レンダリングし可読であることを確認（`captures/rendered/impl_text_sample.png`） |
 | 20 | QR印刷実装 | ✅ 完了 | `printer.print_qr()`。生成QRを目視確認（`captures/rendered/impl_qr_sample.png`）、`qrcode`ライブラリでスキャン可能な形式で生成 |
 | 21 | 画像印刷実装 | ✅ 完了 | `printer.print_image()`。任意画像をリサイズ・ディザリングして1bit化 |
 | 22 | 複合印刷（文字+QR）実装 | ✅ 完了（連続呼び出しで対応） | `print_text()`→`print_qr()`を連続で呼べば複合印刷可能。1枚の画像に合成する機能は未実装（オプション、必要になれば追加） |
-| 23 | テスト実施（tests/配下） | ✅ 完了（実機不要分） | `test_protocol_replay.py`/`test_image.py`/`test_qr.py` 全10件PASS。Bluetooth接続系は実機待ち |
+| 23 | テスト実施（tests/配下） | ✅ 完了 | 自動テスト全10件PASS（実機不要分）に加え、実機での接続・送信テストも成功 |
 | 24 | 引き渡し資料（README/HANDOFF）作成 | 🟡 進行中 | ドラフト作成済み、実機テスト依頼事項を追記予定 |
 
 凡例: ⬜ 未着手 / 🟡 進行中 / ✅ 完了 / ⚠️ ブロック中
@@ -58,6 +58,8 @@
 | 2026-08-26 | 画像テスト（I01〜I06）の必要性 | 文字印刷が既に疎な1bitビットマップとして送信されていることが判明したため、専用の画像テストキャプチャは必須ではないと判断。文字キャプチャを画像プロトコル解析のサンプルとして活用する方針に変更 | Bluetooth方式・データパターンの解析結果を踏まえた判断 |
 | 2026-08-26 | QR機能の再発見 | 「アプリにQR機能なし」の判断を撤回。ノートエディタの挿入メニュー内にQR/バーコード機能があることが判明したため、実際にQR印刷して通信比較を行う方針に変更 | ユーザーによるアプリ再確認 |
 | 2026-08-26 | 印刷プロトコルの完全解読（確定） | ヘッダー8バイト中、オフセット6-7が「高さ（4行単位のu16 LE）」であることを特定。画像幅は384px=48bytes/row、1bit・MSBファースト・bit=1が黒。ビットマップをPNG化し、全18件の文字ジョブ＋QR2件全てで内容が正しく再現されることを目視確認。文字・QRとも専用コマンドは無く、共通の画像プロトコルで送信されると確定 | `tools/btsnoop_parser/render_bitmap.py` によるレンダリング結果（`captures/rendered/`） |
+| 2026-08-26 | Windows実機でのBluetooth接続方式 | 生の`socket.AF_BLUETOOTH`接続はWindowsでタイムアウト（プリンターのドライバーが「使用できません」と表示される状態のため）。Windowsが自動生成する仮想COMポート（デバイスマネージャーで確認できる「Bluetoothリンク経由の標準シリアル」）のうち、**出力側のポート**（本機種ではCOM4。COM3は入力待ち側のため接続がハングする）を`pyserial`で使う方式に変更し、接続に成功 | ユーザーPCでの実機テスト結果 |
+| 2026-08-26 | Python実装の実機検証（成功） | `printer.connect()`→`printer.print_text("Hello from Python")`を実行し、プリンターが純正アプリ使用時と全く同じ印字動作音を出すことを確認。給紙不良（既知のハードウェア問題）は残るが、**通信プロトコル実装は実機で正しく動作することが確認できた** | ユーザーPCでの実機テスト結果 |
 
 ---
 
