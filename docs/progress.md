@@ -13,8 +13,8 @@
 |---|---|---|---|
 | 1 | 対象機器・環境確認 | ✅ 完了 | `docs/device_info.md` 記入済み。解析用Android端末（Android 7.0）に専用アプリ「Luck Jingle」インストール完了 |
 | 2 | Bluetooth方式確認（Classic/BLE） | ⬜ 未着手 | |
-| 3 | Android HCI Snoop Logで通信記録 | 🟡 進行中 | 次はHCI snoop logの有効化 |
-| 4 | 通信キャプチャ用テスト実施（文字/QR/画像） | ⬜ 未着手 | |
+| 3 | Android HCI Snoop Logで通信記録 | ✅ 完了 | 開発者向けオプションでHCI snoop logをON、Bluetooth再起動済み |
+| 4 | 通信キャプチャ用テスト実施（文字/QR/画像） | 🟡 進行中 | ユーザーへテスト印刷手順を案内中 |
 | 5 | HCIログをPCへ取得 | ⬜ 未着手 | |
 | 6 | Wiresharkで通信解析 | ⬜ 未着手 | |
 | 7 | GATT・Write先を特定 | ⬜ 未着手 | `docs/bluetooth_gatt.md` |
