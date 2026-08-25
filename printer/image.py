@@ -2,6 +2,12 @@
 
 docs/protocol_spec.md の確定仕様: 幅384px（48 bytes/row）、1bit、MSBファースト、bit=1が黒。
 行数（高さ）は4の倍数である必要がある（protocol.build_print_command 参照）。
+
+【重要・未解決の既知の問題】このモジュールが生成したビットマップは、実機で複数行にわたる
+横4分割の症状を起こす可能性がある（qr.py のdocstring、docs/protocol_spec.md の
+「既知の未解決問題」を参照）。text_to_bitmap()は内容が単純なため実用上読める大きさで
+印字できることを実機で確認しているが、理論上は同じ問題の影響を受けている可能性が高い。
+to_1bit_bitmap()を使う写真等の画像印刷（printer.print_image）は未検証。
 """
 
 from PIL import Image, ImageDraw, ImageFont
