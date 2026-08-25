@@ -16,11 +16,17 @@
 """
 
 import re
+import time
 
 from .protocol import RFCOMM_CHUNK_SIZE, split_packets
 
 DEFAULT_RFCOMM_PORT = 1  # captures上のRFCOMM DLCI=2 (チャネル1相当) から確定。SDPレスポンスでも確認済み
 DEFAULT_BAUDRATE = 115200  # Bluetooth SPPの仮想COMポートでは実際のシリアル速度には影響しない
+
+# チャンク間の待機時間（秒）。実機テストで、待機なしだと小さいデータ（文字）は成功するが
+# 大きいデータ（QRコード、約18KB=75チャンク以上）は無反応になる現象を確認。
+# プリンター側の受信バッファがチャンクを送りすぎると追いつかないと推測し、余裕を持って挿入する。
+DEFAULT_CHUNK_DELAY = 0.02
 
 _COM_PORT_RE = re.compile(r"^COM\d+$", re.IGNORECASE)
 
@@ -50,11 +56,15 @@ class PrinterConnection:
     def is_connected(self) -> bool:
         return self._sock is not None
 
-    def write(self, data: bytes, chunk_size: int = RFCOMM_CHUNK_SIZE) -> None:
+    def write(self, data: bytes, chunk_size: int = RFCOMM_CHUNK_SIZE,
+              chunk_delay: float = DEFAULT_CHUNK_DELAY) -> None:
         if self._sock is None:
             raise RuntimeError("not connected")
-        for chunk in split_packets(data, chunk_size):
+        chunks = split_packets(data, chunk_size)
+        for i, chunk in enumerate(chunks):
             self._sock.write(chunk) if self._is_serial else self._sock.send(chunk)
+            if chunk_delay and i < len(chunks) - 1:
+                time.sleep(chunk_delay)
 
     def __enter__(self) -> "PrinterConnection":
         self.connect()
