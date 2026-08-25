@@ -2,34 +2,30 @@
 
 通信解析の結果、このプリンターはBLEではなくBluetooth Classic（RFCOMM/SPP）を使用することが
 確定した（docs/bluetooth_gatt.md参照）。そのためbleak（BLE専用）ではなく、
-PyBluez（pybluezライブラリ、モジュール名は `bluetooth`）でClassic RFCOMM接続を行う。
+**Python標準ライブラリの `socket.AF_BLUETOOTH`（RFCOMM）を直接使用する。**
+外部ライブラリ（pybluez等）は不要。LinuxとWindows（公式Pythonビルド）の両方で動作する。
+macOSは標準のsocketモジュールがBluetoothに未対応のため、別途対応が必要。
 
-PyBluezはLinux/Windowsで動作するが、macOSでは別対応が必要な場合がある。未検証。
+Windowsで接続する場合、事前にWindowsの「Bluetoothとその他のデバイス」設定でプリンターを
+ペア設定（PIN不要な機種が多いが、ペアリング自体は必要）しておく必要がある。
 """
 
-import bluetooth  # PyBluez
+import socket
 
 from .protocol import RFCOMM_CHUNK_SIZE, split_packets
 
-SPP_UUID = "00001101-0000-1000-8000-00805f9b34fb"
-DEFAULT_RFCOMM_PORT = 1  # SDP検索に失敗した場合のフォールバック（キャプチャ上のDLCI=2から推定）
+DEFAULT_RFCOMM_PORT = 1  # captures上のRFCOMM DLCI=2 (チャネル1相当) から確定
 
 
 class PrinterConnection:
-    def __init__(self, address: str):
+    def __init__(self, address: str, port: int = DEFAULT_RFCOMM_PORT):
         self.address = address
-        self._sock: bluetooth.BluetoothSocket | None = None
+        self.port = port
+        self._sock: socket.socket | None = None
 
     def connect(self) -> None:
-        port = self._discover_rfcomm_port() or DEFAULT_RFCOMM_PORT
-        self._sock = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
-        self._sock.connect((self.address, port))
-
-    def _discover_rfcomm_port(self) -> int | None:
-        services = bluetooth.find_service(address=self.address, uuid=SPP_UUID)
-        if services:
-            return services[0]["port"]
-        return None
+        self._sock = socket.socket(socket.AF_BLUETOOTH, socket.SOCK_STREAM, socket.BTPROTO_RFCOMM)
+        self._sock.connect((self.address, self.port))
 
     def disconnect(self) -> None:
         if self._sock is not None:

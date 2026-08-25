@@ -18,8 +18,8 @@ python -m pytest tests/
 
 ## 実機が必要なテスト（未実装・引き渡し先で実施予定）
 
-- Bluetooth接続・切断・再接続（`printer/bluetooth.py`, `pybluez`が必要）
+- Bluetooth接続・切断・再接続（`printer/bluetooth.py`。追加ライブラリ不要、標準の`socket.AF_BLUETOOTH`を使用）
 - 実際にプリンターへ送信して印字結果を確認するテスト
 
-これらは`pybluez`のインストールとプリンター実機が必要なため、このセッション（クラウド環境、Bluetoothハードウェアなし）
+これらはBluetoothハードウェアとプリンター実機が必要なため、このセッション（クラウド環境、Bluetoothハードウェアなし）
 では実行できていない。`docs/HANDOFF_README.md` に引き渡し後の実施手順を記載している。

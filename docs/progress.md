@@ -25,8 +25,8 @@
 | 12 | 画像プロトコルを解析 | ✅ 確定（文字/QRキャプチャから導出） | 幅384px・48bytes/row・1bit・MSBファースト・bit=1が黒、を確定。写真等の多階調画像の実挙動のみ未検証（優先度低） |
 | 13 | パケット分割方式を解析 | ✅ 完了 | RFCOMM UIHフレーム、約240 bytesごとに分割されることを確認 |
 | 14 | プロトコル仕様書作成 | ✅ 完了 | `docs/protocol_spec.md` に確定版を記載（チェックサム有無等の細部のみ未確定） |
-| 15 | Python環境構築（venv, pillow, qrcode, ※bleak不使用） | ✅ 完了（このセッション上） | `requirements.txt` に `pybluez`/`pillow`/`qrcode`/`pytest` を記載。pillow/qrcode/pytestは動作確認済み |
-| 16 | PythonからBluetooth接続確認 | ⚠️ 未実施（実機・pybluez環境が必要） | `printer/bluetooth.py` 実装済みだが、クラウド実行環境のためBluetoothハードウェアがなく接続テスト不可。引き渡し先での実施が必要 |
+| 15 | Python環境構築（venv, pillow, qrcode, ※bleak不使用） | ✅ 完了（このセッション上） | `requirements.txt` に `pillow`/`qrcode`/`pytest` を記載（Bluetooth接続は標準ライブラリの`socket.AF_BLUETOOTH`を使用するため追加ライブラリ不要）。pillow/qrcode/pytestは動作確認済み |
+| 16 | PythonからBluetooth接続確認 | ⚠️ 未実施（実機環境が必要） | `printer/bluetooth.py` 実装済みだが、クラウド実行環境のためBluetoothハードウェアがなく接続テスト不可。引き渡し先での実施が必要 |
 | 17 | キャプチャデータをそのまま送信して再現確認 | ✅ 完了（データレベルで検証） | `tests/test_protocol_replay.py` で `protocol.build_print_command()` が実キャプチャのバイト列を完全に再現することを確認済み（実送信は16と同様に実機待ち） |
 | 18 | Pythonプロトコル実装（printer/配下） | ✅ 完了 | `bluetooth.py`（RFCOMM接続）/`protocol.py`（ヘッダー生成）/`image.py`（1bit変換）/`qr.py`/`printer.py` 全て実装済み |
 | 19 | 文字印刷実装 | ✅ 完了 | `printer.print_text()`。生成結果を目視レンダリングし可読であることを確認（`captures/rendered/impl_text_sample.png`） |
@@ -52,7 +52,7 @@
 | 2026-08-25 | QRコード印刷方式 | 専用アプリ「Luck Jingle」にQRコード印刷機能が存在しないことを確認。プリンター側の専用QRコマンドの検証は不可能なため、Python実装ではQRコードを自前生成し画像印刷プロトコルで送信する方式に確定 | ユーザーによるアプリ画面確認（アニメのポートレート/ノートエディタ/スキャン/web印刷/テキスト印刷/バナー印刷/間違いを印刷/OCR/画像/ジグゾー印刷/素材のみでQR項目なし） |
 | 2026-08-26 | HCI Snoop Logの保存場所 | 解析用端末（MediaTekチップ搭載）では、標準的な `/sdcard/btsnoop_hci.log` ではなく `/sdcard/mtklog/btlog/btsnoop_hci.log` に保存されることが判明。ADB経由で取得成功（約230KB） | `adb shell find` / `adb shell ls` による調査結果 |
 | 2026-08-26 | Bluetooth方式 | **Classic（RFCOMM/SPP）に確定。BLEではない。** デバイス名に"BLE"を含むが実際の印刷データ通信はClassic。ATT PDU（BLE/GATT）は全キャプチャ中0件、SDPレスポンスに"SPP slave"文字列を確認 | `tools/btsnoop_parser/` による自作解析スクリプトでの解析結果 |
-| 2026-08-26 | Python実装で使うBluetoothライブラリ | Classic Bluetoothと判明したため`bleak`（BLE専用）は使用不可。`pybluez`等のClassic RFCOMM対応ライブラリに変更する方針とする | 上記Bluetooth方式確定を受けての方針変更 |
+| 2026-08-26 | Python実装で使うBluetoothライブラリ | Classic Bluetoothと判明したため`bleak`（BLE専用）は使用不可。当初`pybluez`を検討したが、Windowsでのビルドが不安定なため、**Python標準ライブラリの`socket.AF_BLUETOOTH`（RFCOMM）を直接使う方式**に変更（外部ライブラリ不要、Linux/Windows両対応） | Bluetooth方式確定を受けての方針変更、およびWindows実機テストを見据えた再検討 |
 | 2026-08-26 | 通信解析の実施方法 | Wireshark（ユーザー操作＋目視報告）ではなく、btsnoopログファイルをアップロードしてもらい、Claude側でPython自作パーサーにより直接解析する方式に変更。より高速・確実なため | 作業効率化のための判断 |
 | 2026-08-26 | 印刷ジョブの通信構造（暫定） | 全印刷ジョブが共通ヘッダー `1D 47 59 04 30 00 17 00` で開始し、ペイロードは疎な1bitビットマップパターン（大半が0x00）。フッターに `1B 4A 50...`（ESC/POSの`ESC J n`類似）を含む。詳細なバイト単位の意味は未解析 | `captures/rfcomm_jobs/` の抽出データと`docs/protocol_spec.md` |
 | 2026-08-26 | 画像テスト（I01〜I06）の必要性 | 文字印刷が既に疎な1bitビットマップとして送信されていることが判明したため、専用の画像テストキャプチャは必須ではないと判断。文字キャプチャを画像プロトコル解析のサンプルとして活用する方針に変更 | Bluetooth方式・データパターンの解析結果を踏まえた判断 |
@@ -78,7 +78,7 @@ Python実装（`printer/`）とデータレベルの検証（`tests/`）はこ�
 ただし、このセッションはクラウド実行環境でBluetoothハードウェアを持たないため、
 **実際のBluetooth接続・印刷テストは未実施。** 次にやるべきことは以下の通り:
 
-1. ユーザーのPC（Bluetooth搭載）で `pip install -r requirements.txt` を実行し、`pybluez`が正常にインストールできるか確認する
+1. ユーザーのPC（Bluetooth搭載）で `pip install -r requirements.txt` を実行する（追加のBluetoothライブラリは不要）
 2. `printer.connect()` で実際にプリンター（MAC: `dd:4c:b9:33:22:10`）へRFCOMM接続できるか確認する
 3. `printer.print_text("Hello")` 等で実際に印刷し、内容が正しいか確認する（給紙不良が解消していれば紙の目視確認も可能）
 4. 問題があれば `printer/bluetooth.py` のRFCOMMポート探索ロジック等を調整する

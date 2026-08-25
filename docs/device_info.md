@@ -41,17 +41,17 @@
 
 ## 環境チェックリスト
 
-- [ ] GKEミニサーマルプリンター本体
-- [ ] Androidスマートフォン（開発者向けオプションを有効化可能なもの）
-- [ ] 純正/専用Androidアプリのインストール
-- [ ] Windows/macOS/Linux PC
-- [ ] USBケーブル（Android⇔PC接続用）
-- [ ] Wiresharkインストール済み
-- [ ] ADBインストール済み（`adb devices` が動作すること）
-- [ ] Python 3 インストール済み
-- [ ] Python `bleak` インストール予定
-- [ ] Python `Pillow` インストール予定
+- [x] GKEミニサーマルプリンター本体
+- [x] Androidスマートフォン（開発者向けオプションを有効化可能なもの）
+- [x] 純正/専用Androidアプリのインストール（「Luck Jingle」）
+- [x] Windows PC
+- [x] USBケーブル（Android⇔PC接続用）
+- [x] ADBインストール済み（`adb devices` が動作すること）
+- [ ] Python 3 インストール（実機テスト時に必要）
+- [ ] Python `Pillow` インストール予定（`bleak`は不使用。Bluetooth ClassicのためPython標準の`socket.AF_BLUETOOTH`を使用）
 - [ ] Python QRコード生成ライブラリ（`qrcode`）インストール予定
+
+備考: Wiresharkは未使用（btsnoopログを自作Pythonツールで直接解析したため）。
 
 ## 備考
 

@@ -60,8 +60,9 @@ source venv/bin/activate  # Windowsの場合は venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-`pybluez`（Bluetooth Classic対応ライブラリ）はOS依存の部分があり、環境によってビルドが必要な場合があります。
-インストールに失敗する場合は `docs/HANDOFF_README.md` のトラブルシューティングを参照してください。
+Bluetooth接続はPython標準ライブラリの `socket.AF_BLUETOOTH` を使用しており、追加のBluetoothライブラリは不要です
+（Linux/Windowsで動作。macOSは別途対応が必要です）。Windowsで接続する場合は、事前にWindowsの設定でプリンターを
+ペアリングしておいてください。
 
 ## テストの実行
 
