@@ -43,24 +43,74 @@ def to_1bit_bitmap(image: Image.Image, dither: bool = True) -> bytes:
     return bytes(out)
 
 
-DEFAULT_FONT_SIZE = 32  # 384px幅の感熱紙で肉眼で読める大きさ（load_default()の既定は小さすぎる）
+DEFAULT_FONT_SIZE = 56  # 実キャプチャ(captures/rfcomm_jobs/job_00.bin、文字"A")の実測グリフ高さ(約45px)を参考に設定
+
+# 日本語を含む文字列を印刷できるよう、主要OSにプリインストールされている日本語フォントを探す。
+# 見つからない場合はPILの既定フォント（英数字のみ）にフォールバックする。
+_JAPANESE_FONT_CANDIDATES = [
+    r"C:\Windows\Fonts\meiryo.ttc",
+    r"C:\Windows\Fonts\YuGothM.ttc",
+    r"C:\Windows\Fonts\msgothic.ttc",
+    "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
+    "/usr/share/fonts/truetype/fonts-japanese-gothic.ttf",
+    "/usr/share/fonts/truetype/takao-gothic/TakaoPGothic.ttf",
+    "/System/Library/Fonts/ヒラギノ角ゴシック W3.ttc",
+]
+
+
+def _load_default_japanese_capable_font(size: int) -> ImageFont.ImageFont:
+    for path in _JAPANESE_FONT_CANDIDATES:
+        try:
+            return ImageFont.truetype(path, size)
+        except OSError:
+            continue
+    return ImageFont.load_default(size=size)
+
+
+def _wrap_line(line: str, font: ImageFont.ImageFont, draw: ImageDraw.ImageDraw, max_width: int) -> list[str]:
+    """1行分のテキストを、幅max_widthに収まるよう単語単位で折り返す。
+
+    英数字はスペース区切りで、日本語などスペースを含まない文字列は1文字ずつ詰めて折り返す。
+    """
+    if not line:
+        return [""]
+
+    def fits(s: str) -> bool:
+        return draw.textbbox((0, 0), s, font=font)[2] <= max_width
+
+    words = line.split(" ") if " " in line else list(line)
+    sep = " " if " " in line else ""
+
+    wrapped = []
+    current = ""
+    for word in words:
+        candidate = current + sep + word if current else word
+        if fits(candidate):
+            current = candidate
+        else:
+            if current:
+                wrapped.append(current)
+            current = word
+    if current:
+        wrapped.append(current)
+    return wrapped or [""]
 
 
 def text_to_bitmap(text: str, font: ImageFont.ImageFont | None = None, font_size: int = DEFAULT_FONT_SIZE,
                     line_spacing: int = 4, margin: int = 4) -> bytes:
-    """文字列を描画して1bitビットマップに変換する。"""
+    """文字列を描画して1bitビットマップに変換する（幅384pxに収まるよう自動折り返し）。"""
     if font is None:
-        font = ImageFont.load_default(size=font_size)
+        font = _load_default_japanese_capable_font(font_size)
 
-    lines = text.split("\n") or [""]
     dummy = Image.new("L", (WIDTH_PX, 10), 255)
     draw = ImageDraw.Draw(dummy)
-    line_heights = []
-    max_width = 0
-    for line in lines:
-        bbox = draw.textbbox((0, 0), line, font=font)
-        line_heights.append(bbox[3] - bbox[1])
-        max_width = max(max_width, bbox[2] - bbox[0])
+    max_text_width = WIDTH_PX - margin * 2
+
+    lines = []
+    for raw_line in text.split("\n"):
+        lines.extend(_wrap_line(raw_line, font, draw, max_text_width))
+
+    line_heights = [draw.textbbox((0, 0), line, font=font)[3] for line in lines]
 
     total_height = sum(line_heights) + line_spacing * (len(lines) - 1) + margin * 2
     canvas = Image.new("L", (WIDTH_PX, max(1, total_height)), 255)
