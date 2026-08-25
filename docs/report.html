@@ -1,0 +1,513 @@
+<title>GKEプリンター解析報告書</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans+JP:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --bg: #f6f3ec;
+    --bg-raised: #fffdf8;
+    --ink: #26241d;
+    --ink-soft: #5b5748;
+    --ink-faint: #8c8770;
+    --rule: #ddd7c4;
+    --rule-strong: #c7c0a8;
+    --accent: #2f6f52;
+    --accent-soft: #e4ede6;
+    --accent-ink: #1e4a38;
+    --warn: #a15a1f;
+    --warn-soft: #f5e6d3;
+    --warn-ink: #7a4315;
+    --ok: #2f6f52;
+    --ok-soft: #e4ede6;
+    --blocked: #a13b3b;
+    --blocked-soft: #f5e0e0;
+    --mono-bg: #211f19;
+    --mono-ink: #e9e4d4;
+    --mono-accent: #7ec99a;
+    --shadow: 0 1px 2px rgba(38, 36, 29, 0.06), 0 4px 16px rgba(38, 36, 29, 0.05);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #1c1b17;
+      --bg-raised: #242219;
+      --ink: #ece7d8;
+      --ink-soft: #b9b39d;
+      --ink-faint: #8a8571;
+      --rule: #3a3729;
+      --rule-strong: #4d493635;
+      --rule-strong: #4d4936;
+      --accent: #7ec99a;
+      --accent-soft: #26362c;
+      --accent-ink: #a7e0bf;
+      --warn: #e0a15e;
+      --warn-soft: #3a2e1c;
+      --warn-ink: #f0c48c;
+      --ok: #7ec99a;
+      --ok-soft: #26362c;
+      --blocked: #e08787;
+      --blocked-soft: #3a2323;
+      --mono-bg: #14130f;
+      --mono-ink: #e9e4d4;
+      --mono-accent: #7ec99a;
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 20px rgba(0, 0, 0, 0.25);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg: #1c1b17;
+    --bg-raised: #242219;
+    --ink: #ece7d8;
+    --ink-soft: #b9b39d;
+    --ink-faint: #8a8571;
+    --rule: #3a3729;
+    --rule-strong: #4d4936;
+    --accent: #7ec99a;
+    --accent-soft: #26362c;
+    --accent-ink: #a7e0bf;
+    --warn: #e0a15e;
+    --warn-soft: #3a2e1c;
+    --warn-ink: #f0c48c;
+    --ok: #7ec99a;
+    --ok-soft: #26362c;
+    --blocked: #e08787;
+    --blocked-soft: #3a2323;
+    --mono-bg: #14130f;
+    --mono-ink: #e9e4d4;
+    --mono-accent: #7ec99a;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 20px rgba(0, 0, 0, 0.25);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "IBM Plex Sans JP", "IBM Plex Sans", "Hiragino Sans", sans-serif;
+    line-height: 1.75;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .sheet {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 4rem 1.75rem 6rem;
+  }
+
+  .eyebrow {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent-ink);
+    display: flex;
+    align-items: center;
+    gap: 0.6em;
+  }
+  .eyebrow::before {
+    content: "";
+    width: 0.5em;
+    height: 0.5em;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+    flex: none;
+  }
+
+  h1 {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-weight: 600;
+    font-size: clamp(1.6rem, 4vw, 2.15rem);
+    line-height: 1.35;
+    letter-spacing: -0.01em;
+    margin: 0.6em 0 0.3em;
+    text-wrap: balance;
+    color: var(--ink);
+  }
+
+  .dek {
+    font-size: 1.05rem;
+    color: var(--ink-soft);
+    max-width: 62ch;
+    margin: 0 0 1.6rem;
+  }
+
+  .meta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.6rem;
+    font-size: 0.85rem;
+    color: var(--ink-faint);
+    border-top: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+    padding: 0.9rem 0;
+    margin-bottom: 2.6rem;
+  }
+  .meta-row dt { font-weight: 600; color: var(--ink-soft); display: inline; }
+  .meta-row dd { display: inline; margin: 0 0 0 0.35em; }
+  .meta-item { white-space: nowrap; }
+
+  section { margin-bottom: 3.2rem; }
+
+  h2 {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 1rem;
+    letter-spacing: 0.02em;
+    color: var(--ink);
+    margin: 0 0 1.1rem;
+    padding-bottom: 0.6rem;
+    border-bottom: 1.5px solid var(--rule-strong);
+    display: flex;
+    align-items: baseline;
+    gap: 0.6em;
+  }
+  h2 .num {
+    color: var(--ink-faint);
+    font-weight: 400;
+  }
+
+  h3 {
+    font-size: 0.98rem;
+    font-weight: 700;
+    margin: 1.6rem 0 0.6rem;
+    color: var(--ink);
+  }
+
+  p { margin: 0 0 1rem; max-width: 66ch; }
+  p.lede { font-size: 1.02rem; }
+
+  strong { font-weight: 700; color: var(--ink); }
+
+  a { color: var(--accent-ink); text-decoration-color: var(--accent); text-underline-offset: 0.15em; }
+  a:hover { text-decoration-thickness: 2px; }
+  a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  code {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.88em;
+    background: var(--accent-soft);
+    color: var(--accent-ink);
+    padding: 0.12em 0.4em;
+    border-radius: 4px;
+  }
+
+  /* status board */
+  .board {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 0.7rem;
+    margin: 1.4rem 0 0;
+  }
+  .card {
+    background: var(--bg-raised);
+    border: 1px solid var(--rule);
+    border-radius: 10px;
+    padding: 0.9rem 1rem;
+    box-shadow: var(--shadow);
+  }
+  .card .label {
+    font-size: 0.78rem;
+    color: var(--ink-faint);
+    margin-bottom: 0.45rem;
+  }
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4em;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    padding: 0.28em 0.6em;
+    border-radius: 999px;
+  }
+  .pill::before { content: ""; width: 0.55em; height: 0.55em; border-radius: 50%; }
+  .pill.ok { background: var(--ok-soft); color: var(--accent-ink); }
+  .pill.ok::before { background: var(--ok); }
+  .pill.warn { background: var(--warn-soft); color: var(--warn-ink); }
+  .pill.warn::before { background: var(--warn); }
+  .pill.blocked { background: var(--blocked-soft); color: var(--blocked); }
+  .pill.blocked::before { background: var(--blocked); }
+
+  /* packet diagram */
+  .packet {
+    display: flex;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--rule-strong);
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.78rem;
+    margin: 1.2rem 0 0.6rem;
+  }
+  .packet > div {
+    padding: 0.7rem 0.6rem;
+    text-align: center;
+  }
+  .packet .seg-header { flex: 0 0 22%; background: var(--accent-soft); color: var(--accent-ink); }
+  .packet .seg-body { flex: 1 1 auto; background: var(--bg-raised); color: var(--ink-soft); border-left: 1px dashed var(--rule-strong); border-right: 1px dashed var(--rule-strong); }
+  .packet .seg-footer { flex: 0 0 22%; background: var(--warn-soft); color: var(--warn-ink); }
+  .packet-caption {
+    font-size: 0.78rem;
+    color: var(--ink-faint);
+    margin: 0 0 1.4rem;
+  }
+
+  .hexrow {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.85rem;
+    background: var(--mono-bg);
+    color: var(--mono-ink);
+    border-radius: 8px;
+    padding: 1rem 1.1rem;
+    overflow-x: auto;
+    margin: 0.6rem 0 1.2rem;
+  }
+  .hexrow .b { color: var(--mono-accent); }
+  .hexrow .d { opacity: 0.55; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+    margin: 0.8rem 0 1.4rem;
+  }
+  caption { text-align: left; font-size: 0.8rem; color: var(--ink-faint); margin-bottom: 0.5rem; }
+  th, td {
+    text-align: left;
+    padding: 0.55rem 0.7rem;
+    border-bottom: 1px solid var(--rule);
+    vertical-align: top;
+  }
+  th {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-weight: 600;
+    font-size: 0.76rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+  td.result-ok { color: var(--accent-ink); font-weight: 600; }
+  td.result-no { color: var(--blocked); font-weight: 600; }
+  .tablewrap { overflow-x: auto; }
+
+  ol.steps, ul.plain {
+    margin: 0 0 1.2rem;
+    padding-left: 1.3em;
+  }
+  ol.steps li, ul.plain li { margin-bottom: 0.5em; max-width: 62ch; }
+
+  .callout {
+    background: var(--warn-soft);
+    border: 1px solid color-mix(in srgb, var(--warn) 35%, transparent);
+    border-radius: 10px;
+    padding: 1.1rem 1.3rem;
+    margin: 1.2rem 0 1.6rem;
+  }
+  .callout .callout-title {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: var(--warn-ink);
+    letter-spacing: 0.02em;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+  }
+  .callout p:last-child { margin-bottom: 0; }
+
+  .repo-card {
+    background: var(--bg-raised);
+    border: 1px solid var(--rule);
+    border-radius: 12px;
+    padding: 1.3rem 1.4rem;
+    box-shadow: var(--shadow);
+  }
+  .repo-card .path {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.82rem;
+    color: var(--ink-soft);
+  }
+  .tree {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.8rem;
+    color: var(--ink-soft);
+    line-height: 1.9;
+    white-space: pre;
+    overflow-x: auto;
+  }
+  .tree .hi { color: var(--accent-ink); font-weight: 600; }
+
+  footer {
+    border-top: 1px solid var(--rule);
+    padding-top: 1.6rem;
+    font-size: 0.85rem;
+    color: var(--ink-faint);
+  }
+
+  @media (max-width: 520px) {
+    .sheet { padding: 2.6rem 1.1rem 4rem; }
+    .packet { flex-direction: column; }
+    .packet .seg-header, .packet .seg-body, .packet .seg-footer { flex: none; border: none; border-bottom: 1px dashed var(--rule-strong); }
+  }
+</style>
+
+<div class="sheet">
+
+  <p class="eyebrow">調査報告書 &middot; Bluetooth プロトコル解析</p>
+  <h1>GKE Mini Pocket Printer 通信解析報告</h1>
+  <p class="dek">専用アプリ「Luck Jingle」の通信を解析し、Python から直接印刷できるライブラリを実装した。文字印刷は実用段階に達したが、QRコード印刷には未解決の問題が1件残っている。</p>
+
+  <dl class="meta-row">
+    <div class="meta-item"><dt>対象機器</dt><dd>GKE Mini Pocket Printer S1-A20 (FW V3.1.4)</dd></div>
+    <div class="meta-item"><dt>作業期間</dt><dd>2026-08-25 〜 2026-08-26</dd></div>
+    <div class="meta-item"><dt>手順書</dt><dd>GKE_thermal_printer_python_reverse_engineering_workflow.md</dd></div>
+    <div class="meta-item"><dt>リポジトリ</dt><dd>ruyachann/app-printer</dd></div>
+  </dl>
+
+  <section>
+    <h2><span class="num">01</span> 現状</h2>
+    <div class="board">
+      <div class="card">
+        <div class="label">Bluetooth方式</div>
+        <span class="pill ok">確定 &middot; Classic (RFCOMM/SPP)</span>
+      </div>
+      <div class="card">
+        <div class="label">通信プロトコル</div>
+        <span class="pill ok">解読完了</span>
+      </div>
+      <div class="card">
+        <div class="label">文字印刷</div>
+        <span class="pill ok">実用可能</span>
+      </div>
+      <div class="card">
+        <div class="label">QRコード印刷</div>
+        <span class="pill blocked">未解決の問題あり</span>
+      </div>
+      <div class="card">
+        <div class="label">画像印刷</div>
+        <span class="pill warn">実装済み・未検証</span>
+      </div>
+      <div class="card">
+        <div class="label">給紙機構（本体）</div>
+        <span class="pill warn">ハードウェア不良の疑い</span>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="num">02</span> 手順書との主な相違点</h2>
+    <p class="lede">元の手順書は BLE + <code>bleak</code> を前提としていたが、実機解析の結果いくつかの前提が覆った。判断の根拠は全て <code>docs/progress.md</code> の決定事項ログに残している。</p>
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr><th>手順書の前提</th><th>実際の調査結果</th><th>対応</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Bluetooth Low Energy（<code>bleak</code>で実装）</td>
+            <td>デバイス名に "BLE" を含むが、実データ通信は <strong>Bluetooth Classic（RFCOMM/SPP）</strong>。ATT/GATTパケットは全キャプチャ中0件</td>
+            <td>Python標準の <code>socket.AF_BLUETOOTH</code>（Windowsでは <code>pyserial</code>経由のCOMポート接続）に変更</td>
+          </tr>
+          <tr>
+            <td>Wiresharkで手動解析</td>
+            <td>btsnoopログを直接アップロードしてもらい、自作Pythonパーサーで解析する方が高速・確実だった</td>
+            <td><code>tools/btsnoop_parser/</code> を新規実装</td>
+          </tr>
+          <tr>
+            <td>文字とQRの通信を比較して判定</td>
+            <td>専用アプリにQR機能が(当初は)見当たらず、後に「ノートエディタ」内に発見。最終的に両方とも同一の画像プロトコルと確認</td>
+            <td>QRは専用コマンドなしと結論、画像プロトコルに統一</td>
+          </tr>
+          <tr>
+            <td>画像テスト(白/黒ドット/線/四角)で画像仕様を特定</td>
+            <td>解析用端末(Android 7.0)の性能不足で画像メニューが開けず未実施</td>
+            <td>文字・QRキャプチャのビットマップパターンから画像仕様を逆算し代替</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="num">03</span> 確定した通信プロトコル</h2>
+    <p>印刷ジョブは3部構成。文字・QRとも専用コマンドは存在せず、共通の1bitラスタービットマップとして送信される。</p>
+
+    <div class="packet">
+      <div class="seg-header">Header<br>8 bytes</div>
+      <div class="seg-body">Bitmap<br>height × 48 bytes</div>
+      <div class="seg-footer">Footer<br>10 bytes</div>
+    </div>
+    <p class="packet-caption">RFCOMM上を約240バイト単位のUIHフレームに分割して送信（Bluetooth Classic / SPP、DLCI=2）。</p>
+
+    <div class="hexrow"><span class="b">1D 47 59 04 30 00</span> <span class="d">‹height/4, u16 LE›</span> ... <span class="b">1B 4A 50 1B BB BB 10 FF F1 45</span></div>
+
+    <div class="tablewrap">
+      <table>
+        <caption>ビットマップ仕様</caption>
+        <tbody>
+          <tr><th>幅</th><td>384 px（48 bytes/row）</td></tr>
+          <tr><th>形式</th><td>1bit / モノクロ、MSBファースト、bit=1が黒</td></tr>
+          <tr><th>高さ</th><td>ヘッダー内の値 × 4（4行単位）。文字は常に92行固定、QRは内容に応じて可変</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>この仕様は実機テストで検証済み: 全18件の文字キャプチャ＋QR2件をビットマップとしてレンダリングし、印字内容と目視で一致することを確認した（「A」「1234567890」「あいうえお」等）。<code>tests/test_protocol_replay.py</code> では、実キャプチャの中身から再構成したコマンドが元のバイト列と完全一致することを自動テストで保証している。</p>
+  </section>
+
+  <section>
+    <h2><span class="num">04</span> 未解決の問題：自前生成画像が4分割される</h2>
+
+    <div class="callout">
+      <div class="callout-title">⚠ 未解決 &middot; QRコード印刷が実用不可</div>
+      <p>自前で生成した画像データ（QRコード等）を送信すると、紙面に<strong>横4分割</strong>されて印字される。実際にアプリが送信した本物のデータをそのまま再送すると、常に正しく1つだけ印字される。</p>
+    </div>
+
+    <p>送信経路とヘッダー生成ロジックが原因ではないことは、実データをそのまま再送して正常動作することで証明済み。以下の要因を実機で個別に切り分けたが、いずれも決定要因ではなかった。</p>
+
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>切り分けた要因</th><th>結果</th></tr></thead>
+        <tbody>
+          <tr><td>データサイズ（52〜1000行超）</td><td class="result-no">無関係</td></tr>
+          <tr><td><code>0xFF</code>バイト（全黒バイト）の有無</td><td class="result-no">無関係</td></tr>
+          <tr><td>パターンの複雑さ・規則性（単色/市松模様/斜め線/ランダムノイズ）</td><td class="result-no">無関係</td></tr>
+          <tr><td>実データと同じ92行に統一</td><td class="result-no">無関係</td></tr>
+          <tr><td>実データの空白構造を残し中身だけ差し替え</td><td class="result-no">無関係（中身自体が原因と確定）</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>「本物のアプリが生成したピクセルデータ」と「独自に生成したピクセルデータ」の間に、何らかの未特定の違いがあると考えられる。詳細な調査記録は <code>docs/protocol_spec.md</code> の「既知の未解決問題」セクションに全て残した。</p>
+
+    <h3>次に試す価値がありそうなこと</h3>
+    <ul class="plain">
+      <li>メーカー公式のSDK・開発者資料が入手できないか確認する（本調査は公式資料なしでの独自解析のため）</li>
+      <li>ロジックアナライザで、生成データ送信時と実データ送信時のプリンター側の応答・タイミングを直接比較する</li>
+      <li>実キャプチャデータを「テンプレート」として複数の実キャプチャ文字を組み合わせる、実用上の代替手段を検討する</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2><span class="num">05</span> 成果物</h2>
+    <div class="repo-card">
+      <p class="path">github.com/ruyachann/app-printer <span style="color:var(--ink-faint)">@</span> claude/gke-thermal-printer-reverse-eng-g9ouzd</p>
+      <div class="tree">app-printer/
+├── docs/                <span class="hi"># 進捗ログ・プロトコル仕様・引き渡し資料</span>
+├── captures/             <span class="hi"># 実通信データ・抽出ジョブ・レンダリング画像</span>
+├── tools/btsnoop_parser/ <span class="hi"># 自作の通信解析ツール</span>
+├── printer/              <span class="hi"># Python実装本体</span>
+└── tests/                <span class="hi"># 自動テスト（10件PASS）</span></div>
+    </div>
+  </section>
+
+  <footer>
+    作業記録の全文は <code>docs/progress.md</code>（決定事項ログ）、実装の詳細は <code>docs/protocol_spec.md</code> を参照。<br>
+    引き渡し手順は <code>docs/HANDOFF_README.md</code> にまとめてある。
+  </footer>
+
+</div>
