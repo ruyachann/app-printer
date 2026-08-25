@@ -98,7 +98,8 @@ Bluetooth ClassicはPython標準ライブラリの`socket.AF_BLUETOOTH`を使用
 手順書作成者向けに、調査結果をまとめた報告書を作成しました。
 
 - Webページ版（共有しやすい形式）: https://claude.ai/code/artifact/428aedc1-f2aa-4f12-b885-0b0c2b8f8545
-- リポジトリ内の同内容: [`docs/report.html`](report.html)（ブラウザで直接開けます）
+- リポジトリ内のHTML版: [`docs/report.html`](report.html)（ブラウザで直接開けます）
+- リポジトリ内のMarkdown版: [`docs/report.md`](report.md)（GitHub上でそのまま読めます）
 
 ## 連絡先・引き継ぎ事項
 
