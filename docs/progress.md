@@ -47,12 +47,13 @@
 | 2026-08-25 | 対象機器 | GKE Mini Pocket Printer（型番: S1-A20、FW: V3.1.4） | ユーザー確認（`docs/device_info.md`） |
 | 2026-08-25 | Bluetoothデバイス名 | `PPS1_DD4C_BLE`（MAC: `dd:4c:b9:33:22:10`） | ユーザー確認 |
 | 2026-08-25 | 専用アプリ | 「Luck Jingle」 | ユーザー確認 |
+| 2026-08-25 | 解析用Android端末 | 手持ちの古い端末（Android 7.0、HCI Snoop Log項目あり）を使用する方向。ただしGoogle Playストアが起動不能（Wi-Fi/日時/キャッシュ削除/再起動を試すも不奏功） | ユーザー確認 |
 
 ---
 
 ## 未確定事項（Open Questions）
 
-- **キャプチャ作業用のAndroid実機の有無**（最優先で確認が必要。ユーザーの主端末はiPhone 17でHCI Snoop Log非対応）
+- **専用アプリ「Luck Jingle」の入手経路**（解析用Android端末はAndroid 7.0でPlayストアが起動不能。基本トラブルシュートも不奏功。メーカー公式のAPK配布QR/URLを確認中）
 - Bluetooth方式（Classic / BLE）: 未確認。デバイス名に"BLE"とあるためBLEの可能性が高いが要検証
 - Service UUID / Write Characteristic UUID: 未確認
 - 文字が画像化されているか: 未確認
