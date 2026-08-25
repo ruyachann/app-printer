@@ -1,0 +1,4 @@
+pybluez
+pillow
+qrcode
+pytest

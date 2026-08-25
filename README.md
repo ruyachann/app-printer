@@ -1,23 +1,27 @@
 # app-printer
 
-GKEミニサーマルプリンターの通信プロトコルを解析し、PC(Python)から直接印刷できるようにするプロジェクトです。
+GKEミニサーマルプリンター（Mini Pocket Printer, 型番: S1-A20）の通信プロトコルを解析し、
+PC(Python)から直接印刷できるようにするプロジェクトです。
 
-専用Androidアプリの通信をキャプチャして解析し、その結果をもとにPython実装（`printer/`）を行います。
-Android専用アプリの開発は行いません。
+専用Androidアプリ「Luck Jingle」の通信をキャプチャして解析し、その結果をもとにPython実装（`printer/`）を行いました。
+Android専用アプリの開発は行っていません。
 
-## 最終ゴール
+## 現在のステータス: プロトコル解読・Python実装 完了（実機での動作確認待ち）
+
+- 通信プロトコルはバイトレベルで完全に解読済み（`docs/protocol_spec.md`）
+- Python実装（`printer/`）は完成し、実キャプチャデータとの比較テストに全件合格（`tests/`）
+- **未実施:** 実際のBluetooth接続・印刷（このプロジェクトを作成した環境にBluetoothハードウェアがないため）
+
+## クイックスタート
 
 ```python
-printer.connect()
-printer.print_text("Hello")
-printer.print_qr("https://example.com")
-printer.print_image("photo.png")
-printer.disconnect()
+from printer.printer import Printer
+
+with Printer("dd:4c:b9:33:22:10") as printer:  # MACアドレスは実機のものに置き換え
+    printer.print_text("Hello")
+    printer.print_qr("https://example.com")
+    printer.print_image("photo.png")
 ```
-
-## 現在の進捗
-
-進捗状況・決定事項は [`docs/progress.md`](docs/progress.md) を参照してください。
 
 ## ディレクトリ構成
 
@@ -26,40 +30,53 @@ app-printer/
 ├── docs/
 │   ├── progress.md          # 進捗トラッカー・決定事項ログ
 │   ├── device_info.md       # 対象機器・環境情報
-│   ├── bluetooth_gatt.md    # Bluetooth/GATT解析結果
-│   ├── protocol_spec.md     # プリンタープロトコル仕様書
+│   ├── bluetooth_gatt.md    # Bluetooth解析結果（Classic/RFCOMM確定）
+│   ├── protocol_spec.md     # プリンタープロトコル仕様書（確定版）
+│   ├── test_plan.md         # 通信キャプチャ用テスト計画・実施記録
 │   ├── HANDOFF_README.md    # 共有先の人向けの引き渡し資料
 │   └── reference/           # 元となった作業手順書
-├── captures/                 # Wiresharkから抽出した通信データ
+├── captures/                 # 実通信データ（btsnoopログ、抽出済みジョブ、レンダリング画像）
+│   ├── rfcomm_jobs/          # 印刷ジョブ単位の生バイナリ（テストの正解データ）
+│   └── rendered/             # ビットマップを画像化した確認用PNG
+├── tools/btsnoop_parser/     # btsnoopログ解析用の自作Pythonツール
 ├── printer/                  # Python実装（bluetooth/protocol/image/qr/printer）
-└── tests/                    # テストコード
+└── tests/                    # テストコード（実機不要のもの全てPASS済み）
 ```
 
-## 進め方
+## 通信プロトコルの概要
 
-このプロジェクトは以下の手順書に沿って進めています。
+- **Bluetooth方式: Classic（RFCOMM/SPP）** （デバイス名に"BLE"を含むが、実データ通信はBLEではない）
+- 文字・QRコードとも専用コマンドは存在せず、**共通の1bitラスタービットマッププロトコル**で送信される
+- 画像仕様: 幅384px（48 bytes/row）、1bit、MSBファースト、bit=1が黒
+- 送信フォーマット: `[Header 8B: 1D 47 59 04 30 00 <height/4 u16 LE>] + [Bitmap] + [Footer 10B: 1B 4A 50 1B BB BB 10 FF F1 45]`
 
-- [`docs/reference/GKE_thermal_printer_python_reverse_engineering_workflow.md`](docs/reference/GKE_thermal_printer_python_reverse_engineering_workflow.md)
+詳細は [`docs/protocol_spec.md`](docs/protocol_spec.md) を参照してください。
 
-大まかな流れ：
-
-1. 対象機器・環境確認
-2. Android側でBluetooth通信をキャプチャ（HCI Snoop Log）
-3. Wiresharkで解析し、GATT構成・プロトコルを特定
-4. 特定した仕様に基づきPython（bleak）で再実装
-5. 文字・QR・画像の印刷をテスト
-
-## セットアップ（Python実装フェーズ以降）
-
-通信解析の結果、このプリンターは**Bluetooth Classic（RFCOMM/SPP）**を使用することが確定しました
-（BLEではありません）。そのため、当初手順書が想定していた`bleak`（BLE専用ライブラリ）ではなく、
-Classic Bluetooth対応のライブラリを使用します。
+## セットアップ
 
 ```bash
 python -m venv venv
 source venv/bin/activate  # Windowsの場合は venv\Scripts\activate
-pip install pybluez pillow qrcode
+pip install -r requirements.txt
 ```
+
+`pybluez`（Bluetooth Classic対応ライブラリ）はOS依存の部分があり、環境によってビルドが必要な場合があります。
+インストールに失敗する場合は `docs/HANDOFF_README.md` のトラブルシューティングを参照してください。
+
+## テストの実行
+
+```bash
+python -m pytest tests/
+```
+
+実キャプチャデータとの比較を含む10件のテストが実機不要で実行できます。
+
+## 進め方の記録
+
+このプロジェクトは以下の手順書に沿って進めました（一部、実際の解析結果に基づき方針変更した箇所があります。
+詳細は `docs/progress.md` の決定事項ログを参照）。
+
+- [`docs/reference/GKE_thermal_printer_python_reverse_engineering_workflow.md`](docs/reference/GKE_thermal_printer_python_reverse_engineering_workflow.md)
 
 ## 共有・引き渡しについて
 

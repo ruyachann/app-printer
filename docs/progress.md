@@ -25,16 +25,16 @@
 | 12 | 画像プロトコルを解析 | ✅ 確定（文字/QRキャプチャから導出） | 幅384px・48bytes/row・1bit・MSBファースト・bit=1が黒、を確定。写真等の多階調画像の実挙動のみ未検証（優先度低） |
 | 13 | パケット分割方式を解析 | ✅ 完了 | RFCOMM UIHフレーム、約240 bytesごとに分割されることを確認 |
 | 14 | プロトコル仕様書作成 | ✅ 完了 | `docs/protocol_spec.md` に確定版を記載（チェックサム有無等の細部のみ未確定） |
-| 15 | Python環境構築（venv, pillow, qrcode, ※bleak不使用） | ⬜ 未着手 | **重要な方針変更**: BLEでなくClassic Bluetoothのため`bleak`は使用不可。`pybluez`等Classic RFCOMM対応ライブラリに変更 |
-| 16 | PythonからBluetooth接続確認 | ⬜ 未着手 | |
-| 17 | キャプチャデータをそのまま送信して再現確認 | ⬜ 未着手 | |
-| 18 | Pythonプロトコル実装（printer/配下） | ⬜ 未着手 | |
-| 19 | 文字印刷実装 | ⬜ 未着手 | |
-| 20 | QR印刷実装 | ⬜ 未着手 | |
-| 21 | 画像印刷実装 | ⬜ 未着手 | |
-| 22 | 複合印刷（文字+QR）実装 | ⬜ 未着手 | |
-| 23 | テスト実施（tests/配下） | ⬜ 未着手 | |
-| 24 | 引き渡し資料（README/HANDOFF）作成 | 🟡 進行中 | ドラフト作成済み、随時更新 |
+| 15 | Python環境構築（venv, pillow, qrcode, ※bleak不使用） | ✅ 完了（このセッション上） | `requirements.txt` に `pybluez`/`pillow`/`qrcode`/`pytest` を記載。pillow/qrcode/pytestは動作確認済み |
+| 16 | PythonからBluetooth接続確認 | ⚠️ 未実施（実機・pybluez環境が必要） | `printer/bluetooth.py` 実装済みだが、クラウド実行環境のためBluetoothハードウェアがなく接続テスト不可。引き渡し先での実施が必要 |
+| 17 | キャプチャデータをそのまま送信して再現確認 | ✅ 完了（データレベルで検証） | `tests/test_protocol_replay.py` で `protocol.build_print_command()` が実キャプチャのバイト列を完全に再現することを確認済み（実送信は16と同様に実機待ち） |
+| 18 | Pythonプロトコル実装（printer/配下） | ✅ 完了 | `bluetooth.py`（RFCOMM接続）/`protocol.py`（ヘッダー生成）/`image.py`（1bit変換）/`qr.py`/`printer.py` 全て実装済み |
+| 19 | 文字印刷実装 | ✅ 完了 | `printer.print_text()`。生成結果を目視レンダリングし可読であることを確認（`captures/rendered/impl_text_sample.png`） |
+| 20 | QR印刷実装 | ✅ 完了 | `printer.print_qr()`。生成QRを目視確認（`captures/rendered/impl_qr_sample.png`）、`qrcode`ライブラリでスキャン可能な形式で生成 |
+| 21 | 画像印刷実装 | ✅ 完了 | `printer.print_image()`。任意画像をリサイズ・ディザリングして1bit化 |
+| 22 | 複合印刷（文字+QR）実装 | ✅ 完了（連続呼び出しで対応） | `print_text()`→`print_qr()`を連続で呼べば複合印刷可能。1枚の画像に合成する機能は未実装（オプション、必要になれば追加） |
+| 23 | テスト実施（tests/配下） | ✅ 完了（実機不要分） | `test_protocol_replay.py`/`test_image.py`/`test_qr.py` 全10件PASS。Bluetooth接続系は実機待ち |
+| 24 | 引き渡し資料（README/HANDOFF）作成 | 🟡 進行中 | ドラフト作成済み、実機テスト依頼事項を追記予定 |
 
 凡例: ⬜ 未着手 / 🟡 進行中 / ✅ 完了 / ⚠️ ブロック中
 
@@ -72,7 +72,14 @@
 
 ## 次にやるべきこと（Next Action）
 
-現在のステップ: **Phase 15-23 - Python実装**
+現在のステップ: **実機での動作確認、および引き渡し資料の最終化**
 
-→ Bluetooth Classic RFCOMM対応ライブラリ（pybluez等）の選定・動作確認から着手する。
-→ `docs/protocol_spec.md` の確定仕様に基づき、`printer/bluetooth.py`（RFCOMM接続）→`printer/protocol.py`（ヘッダー生成）→`printer/image.py`（1bitビットマップ変換）→`printer/qr.py`→`printer/printer.py`の順に実装予定。
+Python実装（`printer/`）とデータレベルの検証（`tests/`）はこのセッション上で完了した。
+ただし、このセッションはクラウド実行環境でBluetoothハードウェアを持たないため、
+**実際のBluetooth接続・印刷テストは未実施。** 次にやるべきことは以下の通り:
+
+1. ユーザーのPC（Bluetooth搭載）で `pip install -r requirements.txt` を実行し、`pybluez`が正常にインストールできるか確認する
+2. `printer.connect()` で実際にプリンター（MAC: `dd:4c:b9:33:22:10`）へRFCOMM接続できるか確認する
+3. `printer.print_text("Hello")` 等で実際に印刷し、内容が正しいか確認する（給紙不良が解消していれば紙の目視確認も可能）
+4. 問題があれば `printer/bluetooth.py` のRFCOMMポート探索ロジック等を調整する
+5. 引き渡し資料（`docs/HANDOFF_README.md`）を最終化する

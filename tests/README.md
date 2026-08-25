@@ -1,9 +1,25 @@
 # tests/ について
 
-`printer/` モジュールの実装（Phase 18以降）に合わせて、以下のテストを追加していきます（手順書 31章 テスト項目に対応）。
+`printer/` モジュールのテストです。実行方法:
 
-- `test_text.py`: 文字印刷のテスト
-- `test_qr.py`: QRコード印刷のテスト
-- `test_image.py`: 画像印刷のテスト
+```bash
+pip install -r requirements.txt
+python -m pytest tests/
+```
 
-実機テストのため、pytestの通常CIでは自動実行せず、手動実行を前提とします。
+## テスト一覧
+
+- `test_protocol_replay.py`: **最重要**。実際のキャプチャデータ（`captures/rfcomm_jobs/`）を使い、
+  `protocol.build_print_command()` が実機へ送信された生バイト列を寸分違わず再現できるかを検証する回帰テスト。
+- `test_image.py`: `image.py`（テキスト・画像の1bitビットマップ変換）の単体テスト
+- `test_qr.py`: `qr.py`（QRコード生成・変換）の単体テスト
+
+これらは全て**実機不要**（Bluetooth接続なし）で実行できる。
+
+## 実機が必要なテスト（未実装・引き渡し先で実施予定）
+
+- Bluetooth接続・切断・再接続（`printer/bluetooth.py`, `pybluez`が必要）
+- 実際にプリンターへ送信して印字結果を確認するテスト
+
+これらは`pybluez`のインストールとプリンター実機が必要なため、このセッション（クラウド環境、Bluetoothハードウェアなし）
+では実行できていない。`docs/HANDOFF_README.md` に引き渡し後の実施手順を記載している。
