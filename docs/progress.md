@@ -42,17 +42,18 @@
 
 ## 決定事項ログ（Decisions Log）
 
-作業を進める中で確定した事項をここに追記していきます。まだ何も確定していません。
-
 | 日付 | 項目 | 決定内容 | 根拠 |
 |---|---|---|---|
-| - | - | まだ決定事項なし | - |
+| 2026-08-25 | 対象機器 | GKE Mini Pocket Printer（型番: S1-A20、FW: V3.1.4） | ユーザー確認（`docs/device_info.md`） |
+| 2026-08-25 | Bluetoothデバイス名 | `PPS1_DD4C_BLE`（MAC: `dd:4c:b9:33:22:10`） | ユーザー確認 |
+| 2026-08-25 | 専用アプリ | 「Luck Jingle」 | ユーザー確認 |
 
 ---
 
 ## 未確定事項（Open Questions）
 
-- Bluetooth方式（Classic / BLE）: 未確認
+- **キャプチャ作業用のAndroid実機の有無**（最優先で確認が必要。ユーザーの主端末はiPhone 17でHCI Snoop Log非対応）
+- Bluetooth方式（Classic / BLE）: 未確認。デバイス名に"BLE"とあるためBLEの可能性が高いが要検証
 - Service UUID / Write Characteristic UUID: 未確認
 - 文字が画像化されているか: 未確認
 - QRコードが専用コマンドか画像化か: 未確認
@@ -62,6 +63,6 @@
 
 ## 次にやるべきこと（Next Action）
 
-現在のステップ: **Phase 1 - 対象機器・環境確認**
+現在のステップ: **Phase 1 - 対象機器・環境確認（続き）**
 
-→ ユーザーへ質問中: `docs/device_info.md` の記入項目についてヒアリング中。
+→ ユーザーへ質問中: 通信キャプチャに使用できるAndroid実機の有無を確認中。
