@@ -3,23 +3,31 @@
 通信解析の結果を集約したプロトコル仕様書です。Python実装（`printer/`配下）はこの仕様に基づいて行います。
 **不明な項目は推測で埋めず、「未確定」と記録すること。**
 
-## Connection
+## Connection（確定）
 
 | 項目 | 値 |
 |---|---|
-| Service UUID | 未確定 |
-| Write Characteristic UUID | 未確定 |
-| Write Type | 未確定（Write Without Response / Write With Response） |
+| Bluetooth方式 | **Classic（RFCOMM/SPP）**。BLE/GATTではない |
+| Service UUID / Write Characteristic UUID | 該当なし（BLEでないため） |
+| トランスポート | RFCOMM（DLCI=0が制御チャネル、DLCI=2がデータチャネル） |
+| Write Type | RFCOMM UIHフレーム |
 
-## Packet 構造
+詳細は `docs/bluetooth_gatt.md` を参照。
+
+## Packet 構造（暫定・詳細解析中）
+
+各印刷ジョブは、RFCOMM DLCI=2 のUIHフレーム列として送信される。ジョブ全体の構造:
 
 | フィールド | サイズ | 内容 |
 |---|---|---|
-| Header | 未確定 | 未確定 |
-| Command | 未確定 | 未確定 |
-| Length | 未確定 | 未確定 |
-| Payload | N bytes | 未確定 |
-| Checksum | 未確定 | 未確定 |
+| Header | 8 bytes | `1D 47 59 04 30 00 17 00`（全ジョブ共通、固定値。各バイトの意味は未解析） |
+| Image Payload | 可変（4400〜5600 bytes程度） | 大半が0x00、一部非ゼロの1bitラスタービットマップと推定。幅・高さ・ビット順は未解析 |
+| Footer | 可変 | `1B 4A 50 ...` を含む（ESC/POSの `ESC J n` (行送り)に類似）。詳細未解析 |
+| Checksum | 未確定 | 未確認 |
+
+ジョブ間には短い制御フレーム（`01 10 ff` 等）が挟まることがある（ステータス確認と推定、未解析）。
+
+生データは `captures/rfcomm_jobs/job_00.bin` 〜 `job_17.bin` に保存済み。
 
 ## 文字（Text）
 
@@ -69,6 +77,7 @@
 
 ## 判定結論（重要）
 
-- 文字は画像化されているか: **未確定**
+- Bluetooth方式: **Classic（RFCOMM/SPP）で確定**。BLEではない
+- 文字は画像化されているか: **画像化の可能性が非常に高い（ほぼ確定）**。全テキスト印刷ジョブが同一ヘッダーで開始し、ペイロードが疎な1bitビットマップパターンを示す。ジョブごとのバイト長の違いも文字列の長さ・複雑さと相関している可能性が高い（例: job_02が5633 bytesと突出して大きい）
 - QRは専用コマンドか画像化か: **画像化で確定**（アプリにQR機能が存在しないため）
-- 採用方式（手順書 30章の優先順位に基づく）: QRはPython側でqrcodeライブラリにより生成し、画像印刷プロトコルで送信する方式に確定。文字については引き続きキャプチャ比較で判定する
+- 採用方式（手順書 30章の優先順位に基づく）: 文字・QRともにPython側で画像化し、共通の画像印刷プロトコルで送信する方式が有力。ヘッダー/フッターのバイト単位の意味・幅・高さ・チェックサムは未解析で、今後の作業項目とする

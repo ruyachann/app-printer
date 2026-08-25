@@ -51,10 +51,14 @@ app-printer/
 
 ## セットアップ（Python実装フェーズ以降）
 
+通信解析の結果、このプリンターは**Bluetooth Classic（RFCOMM/SPP）**を使用することが確定しました
+（BLEではありません）。そのため、当初手順書が想定していた`bleak`（BLE専用ライブラリ）ではなく、
+Classic Bluetooth対応のライブラリを使用します。
+
 ```bash
 python -m venv venv
 source venv/bin/activate  # Windowsの場合は venv\Scripts\activate
-pip install bleak pillow qrcode
+pip install pybluez pillow qrcode
 ```
 
 ## 共有・引き渡しについて
