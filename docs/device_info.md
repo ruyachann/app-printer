@@ -10,10 +10,10 @@
 | メーカー | GKE |
 | 製品名 | Mini Pocket Printer |
 | 型番 | S1-A20 |
-| Bluetoothデバイス名 | PPS1_DD4C_BLE |
+| Bluetoothデバイス名 | Android(スキャン/ペアリング時): `PPS1_DD4C_BLE`／Windows(ペアリング済み一覧): `PPS1_DD4C`（"_BLE"接尾辞なし。2026-08-26確認。同一機器で、OS・discovery方法によって表示名が異なると推測される） |
 | MACアドレス | dd:4c:b9:33:22:10 |
 | ファームウェアバージョン | V3.1.4 |
-| 対応Bluetooth方式（Classic / BLE） | 未確認（Phase 2で確認。デバイス名に"BLE"とあるためBLEの可能性が高いが要確認） |
+| 対応Bluetooth方式（Classic / BLE） | **Classic（RFCOMM/SPP）で確定**（Phase 2-3で確認。デバイス名に"BLE"を含んでいたためBLEの可能性を疑ったが、実データ通信はBLE/GATTではなくClassicだった） |
 
 ## アプリ・スマートフォン情報
 

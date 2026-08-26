@@ -39,7 +39,7 @@ python3 extract_jobs.py <btsnoop_hci.log> <output_dir>
 
 ## このプロジェクトでの解析結果（2026-08-26時点）
 
-- Bluetooth方式: **Classic（RFCOMM/SPP）確定**。ATT PDUは0件。デバイス名に"BLE"を含むが、実際の印刷データ通信はBLEではない
+- Bluetooth方式: **Classic（RFCOMM/SPP）確定**。ATT PDUは0件。Android側では"BLE"を含む名前で見えることがあるが、実際の印刷データ通信はBLEではない
 - RFCOMMチャネル確立: CID 0x0051 上で DLCI=0（制御チャネル）→ DLCI=2（データチャネル、RFCOMMチャネル1相当）の順にSABM/UA
 - 印刷ジョブは全て同一ヘッダー `1D 47 59 04 30 00 17 00` で開始（詳細な意味は未解析、`docs/protocol_spec.md` 参照）
 - ペイロードの大部分は `0x00` で、一部のみ非ゼロ → 1bitラスタービットマップの特徴と一致。**文字は画像化されて送信されている可能性が高い**

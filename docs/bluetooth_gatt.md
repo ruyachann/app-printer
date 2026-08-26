@@ -10,7 +10,7 @@
 | Bluetooth方式 | **Bluetooth Classic（確定）**。BLE/GATTのATT PDU（CID 0x0004）は全キャプチャ中0件 |
 | プロファイル | **SPP（Serial Port Profile）**。SDPレスポンスに文字列「SPP slave」を確認 |
 | トランスポート | RFCOMM（L2CAP上のシリアル通信プロトコル） |
-| 備考 | デバイス名は `PPS1_DD4C_BLE` と"BLE"を含むが、実際の印刷データ通信はBLEではなくClassicのRFCOMM/SPPだった |
+| 備考 | Android側では `PPS1_DD4C_BLE` と"BLE"を含む名前で見えていたが、実際の印刷データ通信はBLEではなくClassicのRFCOMM/SPPだった。2026-08-26、Windows側でペアリング済みデバイス名を確認したところ `PPS1_DD4C`（"_BLE"接尾辞なし）と表示されており、同一機器でもOS・discovery経路によって表示名が異なることが分かった（Classic Bluetoothとしての機器名自体には元々"BLE"は含まれていなかった可能性が高い） |
 
 ## GATT情報（BLEの場合）→ 該当なし
 

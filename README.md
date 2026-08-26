@@ -51,7 +51,7 @@ app-printer/
 
 ## 通信プロトコルの概要
 
-- **Bluetooth方式: Classic（RFCOMM/SPP）** （デバイス名に"BLE"を含むが、実データ通信はBLEではない）
+- **Bluetooth方式: Classic（RFCOMM/SPP）** （Android側では"BLE"を含む名前で見えることがあるが、実データ通信はBLEではない。詳細は`docs/bluetooth_gatt.md`参照）
 - 文字・QRコードとも専用コマンドは存在せず、**共通の4階調グレースケールラスタービットマッププロトコル**で送信される
 - 画像仕様: 幅384px、**1バイトに2画素（4bit/画素、値0〜3、192 bytes/row）**、0=白・3=黒
 - 送信フォーマット: `[Header 8B: 1D 47 59 <gray_levels=04> <width_ref u16 LE=30 00> <height u16 LE>] + [Bitmap] + [Footer 10B: 1B 4A 50 1B BB BB 10 FF F1 45]`
