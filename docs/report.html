@@ -318,6 +318,31 @@
     gap: 0.5em;
   }
   .callout p:last-child { margin-bottom: 0; }
+  .callout.resolved {
+    background: var(--ok-soft);
+    border-color: color-mix(in srgb, var(--ok) 35%, transparent);
+  }
+  .callout.resolved .callout-title { color: var(--accent-ink); }
+
+  .comparison {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.7rem;
+    margin: 1.2rem 0 1.6rem;
+  }
+  .comparison .card { padding: 1rem 1.1rem; }
+  .comparison .card.was { border-color: color-mix(in srgb, var(--blocked) 30%, var(--rule)); }
+  .comparison .card.now { border-color: color-mix(in srgb, var(--ok) 30%, var(--rule)); }
+  .comparison .card .kicker {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+  .comparison .card.was .kicker { color: var(--blocked); }
+  .comparison .card.now .kicker { color: var(--accent-ink); }
+  @media (max-width: 520px) { .comparison { grid-template-columns: 1fr; } }
 
   .repo-card {
     background: var(--bg-raised);
@@ -357,9 +382,9 @@
 
 <div class="sheet">
 
-  <p class="eyebrow">調査報告書 &middot; Bluetooth プロトコル解析</p>
+  <p class="eyebrow">調査報告書 &middot; Bluetooth プロトコル解析（最終版）</p>
   <h1>GKE Mini Pocket Printer 通信解析報告</h1>
-  <p class="dek">専用アプリ「Luck Jingle」の通信を解析し、Python から直接印刷できるライブラリを実装した。文字印刷は実用段階に達したが、QRコード印刷には未解決の問題が1件残っている。</p>
+  <p class="dek">専用アプリ「Luck Jingle」の通信を解析し、Python から直接印刷できるライブラリを実装した。文字・QRコード・画像（写真）印刷のすべてが実機で動作することを確認し、プロジェクトの目的を完全に達成した。</p>
 
   <dl class="meta-row">
     <div class="meta-item"><dt>対象機器</dt><dd>GKE Mini Pocket Printer S1-A20 (FW V3.1.4)</dd></div>
@@ -381,15 +406,15 @@
       </div>
       <div class="card">
         <div class="label">文字印刷</div>
-        <span class="pill ok">実用可能</span>
+        <span class="pill ok">実機確認済み</span>
       </div>
       <div class="card">
         <div class="label">QRコード印刷</div>
-        <span class="pill blocked">未解決の問題あり</span>
+        <span class="pill ok">実機確認済み</span>
       </div>
       <div class="card">
-        <div class="label">画像印刷</div>
-        <span class="pill warn">実装済み・未検証</span>
+        <div class="label">画像（写真）印刷</div>
+        <span class="pill ok">実機確認済み</span>
       </div>
       <div class="card">
         <div class="label">給紙機構（本体）</div>
@@ -425,7 +450,7 @@
           <tr>
             <td>画像テスト(白/黒ドット/線/四角)で画像仕様を特定</td>
             <td>解析用端末(Android 7.0)の性能不足で画像メニューが開けず未実施</td>
-            <td>文字・QRキャプチャのビットマップパターンから画像仕様を逆算し代替</td>
+            <td>ビットマップ通信解析に加え、<strong>本物のアプリのAPKを逆コンパイル</strong>して画像エンコード処理のソースコードを直接確認する手法に切り替え</td>
           </tr>
         </tbody>
       </table>
@@ -434,62 +459,76 @@
 
   <section>
     <h2><span class="num">03</span> 確定した通信プロトコル</h2>
-    <p>印刷ジョブは3部構成。文字・QRとも専用コマンドは存在せず、共通の1bitラスタービットマップとして送信される。</p>
+    <p>印刷ジョブは3部構成。文字・QR・画像とも専用コマンドは存在せず、共通の<strong>4階調グレースケールラスター</strong>として送信される。</p>
 
     <div class="packet">
       <div class="seg-header">Header<br>8 bytes</div>
-      <div class="seg-body">Bitmap<br>height × 48 bytes</div>
+      <div class="seg-body">Bitmap<br>height × 192 bytes</div>
       <div class="seg-footer">Footer<br>10 bytes</div>
     </div>
     <p class="packet-caption">RFCOMM上を約240バイト単位のUIHフレームに分割して送信（Bluetooth Classic / SPP、DLCI=2）。</p>
 
-    <div class="hexrow"><span class="b">1D 47 59 04 30 00</span> <span class="d">‹height/4, u16 LE›</span> ... <span class="b">1B 4A 50 1B BB BB 10 FF F1 45</span></div>
+    <div class="hexrow"><span class="b">1D 47 59</span> <span class="d">‹gray_levels=04› ‹width_ref u16 LE=30 00› ‹height u16 LE›</span> ... <span class="b">1B 4A 50 1B BB BB 10 FF F1 45</span></div>
 
     <div class="tablewrap">
       <table>
-        <caption>ビットマップ仕様</caption>
+        <caption>ビットマップ仕様（2026-08-26 訂正版）</caption>
         <tbody>
-          <tr><th>幅</th><td>384 px（48 bytes/row）</td></tr>
-          <tr><th>形式</th><td>1bit / モノクロ、MSBファースト、bit=1が黒</td></tr>
-          <tr><th>高さ</th><td>ヘッダー内の値 × 4（4行単位）。文字は常に92行固定、QRは内容に応じて可変</td></tr>
+          <tr><th>幅</th><td>384 px</td></tr>
+          <tr><th>1行あたりバイト数</th><td><strong>192 bytes</strong>（1バイトに2画素、4bit/画素）</td></tr>
+          <tr><th>形式</th><td><strong>4階調グレースケール</strong>（値0〜3、0=白・3=黒）</td></tr>
+          <tr><th>高さ</th><td>ヘッダー内の値そのまま（変換不要）。文字は常に23行固定、QR・画像は内容に応じて可変</td></tr>
         </tbody>
       </table>
     </div>
 
-    <p>この仕様は実機テストで検証済み: 全18件の文字キャプチャ＋QR2件をビットマップとしてレンダリングし、印字内容と目視で一致することを確認した（「A」「1234567890」「あいうえお」等）。<code>tests/test_protocol_replay.py</code> では、実キャプチャの中身から再構成したコマンドが元のバイト列と完全一致することを自動テストで保証している。</p>
+    <p>この仕様は実機テストで最終検証済み: 文字・QR・画像のいずれも1個だけ、歪みなく正しく印字されることを確認した。<code>tests/test_protocol_replay.py</code> では、実キャプチャの中身から再構成したコマンドが元のバイト列と完全一致することを自動テストで保証している。</p>
   </section>
 
   <section>
-    <h2><span class="num">04</span> 未解決の問題：自前生成画像が4分割される</h2>
+    <h2><span class="num">04</span> 最大の難関だった不具合とその解決</h2>
 
     <div class="callout">
-      <div class="callout-title">⚠ 未解決 &middot; QRコード印刷が実用不可</div>
-      <p>自前で生成した画像データ（QRコード等）を送信すると、紙面に<strong>横4分割</strong>されて印字される。実際にアプリが送信した本物のデータをそのまま再送すると、常に正しく1つだけ印字される。</p>
+      <div class="callout-title">⚠ 調査序盤〜中盤：QRコード等の自前生成画像が紙面に横4分割される</div>
+      <p>自前で生成した画像データを送信すると、紙面に本来1枚のはずの画像が<strong>横4分割</strong>されて印字される現象が長期間発生していた。実際にアプリが送信した本物のデータをそのまま再送すると常に正しく1つだけ印字されるため、原因は「生成した画像データの中身」にあると推測されたが、以下の要因を実機で個別に切り分けても特定できなかった。</p>
     </div>
-
-    <p>送信経路とヘッダー生成ロジックが原因ではないことは、実データをそのまま再送して正常動作することで証明済み。以下の要因を実機で個別に切り分けたが、いずれも決定要因ではなかった。</p>
 
     <div class="tablewrap">
       <table>
         <thead><tr><th>切り分けた要因</th><th>結果</th></tr></thead>
         <tbody>
-          <tr><td>データサイズ（52〜1000行超）</td><td class="result-no">無関係</td></tr>
-          <tr><td><code>0xFF</code>バイト（全黒バイト）の有無</td><td class="result-no">無関係</td></tr>
-          <tr><td>パターンの複雑さ・規則性（単色/市松模様/斜め線/ランダムノイズ）</td><td class="result-no">無関係</td></tr>
-          <tr><td>実データと同じ92行に統一</td><td class="result-no">無関係</td></tr>
-          <tr><td>実データの空白構造を残し中身だけ差し替え</td><td class="result-no">無関係（中身自体が原因と確定）</td></tr>
+          <tr><td>送信経路（COMポート接続・チャンク分割等）</td><td class="result-no">無関係</td></tr>
+          <tr><td>データサイズ・行数</td><td class="result-no">無関係</td></tr>
+          <tr><td>バイト値の範囲・パターンの複雑さ</td><td class="result-no">無関係</td></tr>
+          <tr><td>送信幅・余白（マージン）</td><td class="result-no">無関係</td></tr>
         </tbody>
       </table>
     </div>
 
-    <p>「本物のアプリが生成したピクセルデータ」と「独自に生成したピクセルデータ」の間に、何らかの未特定の違いがあると考えられる。詳細な調査記録は <code>docs/protocol_spec.md</code> の「既知の未解決問題」セクションに全て残した。</p>
+    <h3>決め手となった手法：本物のアプリのAPK逆コンパイル</h3>
+    <p>ブラックボックスの通信解析だけでは原因が特定できなかったため、方針を切り替え、<strong>本物のアプリ（<code>com.dingdang.newprint</code>）のAPKファイルを端末から取得し、逆コンパイル</strong>した（<code>androguard</code>というPython製ツールを使用）。その結果、<code>com.luckprinter.sdk_new</code>という専用プリンターSDKの中に、実際のビットマップ変換処理（<code>PrinterImageProcessor</code>クラス）を発見した。これにより、<strong>プロトコルの理解が根本的に誤っていた</strong>ことが判明した。</p>
 
-    <h3>次に試す価値がありそうなこと</h3>
-    <ul class="plain">
-      <li>メーカー公式のSDK・開発者資料が入手できないか確認する（本調査は公式資料なしでの独自解析のため）</li>
-      <li>ロジックアナライザで、生成データ送信時と実データ送信時のプリンター側の応答・タイミングを直接比較する</li>
-      <li>実キャプチャデータを「テンプレート」として複数の実キャプチャ文字を組み合わせる、実用上の代替手段を検討する</li>
-    </ul>
+    <div class="comparison">
+      <div class="card was">
+        <div class="kicker">従来の誤った理解</div>
+        <p style="margin-bottom:0.4em">1bit白黒（8画素/バイト）</p>
+        <p style="margin-bottom:0.4em">48バイト/行</p>
+        <p style="margin-bottom:0">高さフィールド ×4 = 実際の行数</p>
+      </div>
+      <div class="card now">
+        <div class="kicker">正しい仕様</div>
+        <p style="margin-bottom:0.4em"><strong>4階調グレースケール</strong>（2画素/バイト）</p>
+        <p style="margin-bottom:0.4em"><strong>192バイト/行</strong></p>
+        <p style="margin-bottom:0">高さフィールド = <strong>そのまま</strong>実際の行数</p>
+      </div>
+    </div>
+
+    <p>48×4=192という数値が偶然一致していたため、「ヘッダーの高さ×4＝実際の行数」という辻褄の合う（しかし誤った）解釈のまま長期間実装・検証を続けてしまっていた。総バイト数はどちらの解釈でも変わらないため、単純なバイト列再構築テストでは矛盾を検出できず、実機に自前生成画像を送って初めて不具合として露呈していた。正しい形式で実キャプチャデータを再デコードしたところ、文字・QR・複数QR配置のいずれも歪みのない正しい画像として復元でき、この発見が正しかったことが裏付けられた。</p>
+
+    <div class="callout resolved">
+      <div class="callout-title">✓ 修正と実機確認</div>
+      <p><code>printer/protocol.py</code>・<code>printer/image.py</code>・<code>printer/qr.py</code>を正しい仕様に全面的に書き直し、実機でテストした結果、<strong>QRコード</strong>（きれいな大きなQRコードが1個だけ）、<strong>文字</strong>（日本語を含め読める大きさで）、<strong>画像（写真）</strong>（グレースケール写真をFloyd-Steinbergディザリングで自然な階調表現に）のいずれも正しく印字されることを確認した。写真の初回テストではグラデーション部分に4階調ゆえの縞模様（バンディング）が出たが、ディザリングを標準で有効にすることで解決した。</p>
+    </div>
   </section>
 
   <section>
@@ -503,6 +542,21 @@
 ├── printer/              <span class="hi"># Python実装本体</span>
 └── tests/                <span class="hi"># 自動テスト（10件PASS）</span></div>
     </div>
+    <div class="hexrow" style="margin-top:1rem"><span class="d">from printer.printer import Printer
+
+with Printer("dd:4c:b9:33:22:10") as printer:
+    printer.print_text("Hello")
+    printer.print_qr("https://example.com")
+    printer.print_image("photo.png")</span></div>
+  </section>
+
+  <section>
+    <h2><span class="num">06</span> 残る未確定事項（軽微）</h2>
+    <ul class="plain">
+      <li>フッター（<code>1B 4A 50 1B BB BB 10 FF F1 45</code>）の各バイトの正確な意味（チェックサム有無等）</li>
+      <li>カラー写真での印字結果（グレースケール写真のみ確認済み。<code>to_gray4_bitmap()</code>は内部でグレースケール変換するため動作するはずだが未検証）</li>
+    </ul>
+    <p>いずれも実用上の支障はなく、プロジェクトの主目的（Androidアプリなしで、Pythonから直接プリンターへ印刷する）はすでに達成されている。</p>
   </section>
 
   <footer>
