@@ -6,7 +6,7 @@
     printer.connect()
     printer.print_text("Hello")
     printer.print_qr("https://example.com")
-    printer.print_image("photo.png")
+    printer.print_image("photo.png")  # 既定でディザリング有効（4階調でも滑らかな階調表現）
     printer.disconnect()
 
     # または
@@ -17,7 +17,7 @@
 from PIL import Image
 
 from .bluetooth import PrinterConnection
-from .image import text_to_bitmap, to_1bit_bitmap
+from .image import text_to_bitmap, to_gray4_bitmap
 from .protocol import build_print_command
 from .qr import generate_qr_bitmap
 
@@ -44,9 +44,9 @@ class Printer:
         bitmap = generate_qr_bitmap(data)
         self._conn.write(build_print_command(bitmap))
 
-    def print_image(self, path: str) -> None:
+    def print_image(self, path: str, dither: bool = True) -> None:
         image = Image.open(path)
-        bitmap = to_1bit_bitmap(image)
+        bitmap = to_gray4_bitmap(image, dither=dither)
         self._conn.write(build_print_command(bitmap))
 
     def __enter__(self) -> "Printer":

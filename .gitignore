@@ -4,3 +4,4 @@ __pycache__/
 venv/
 .venv/
 test_padded_qr.bin
+dithered_full_qr.bin
