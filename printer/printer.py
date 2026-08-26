@@ -6,7 +6,7 @@
     printer.connect()
     printer.print_text("Hello")
     printer.print_qr("https://example.com")
-    printer.print_image("photo.png")
+    printer.print_image("photo.png")  # 既定でディザリング有効（4階調でも滑らかな階調表現）
     printer.disconnect()
 
     # または
@@ -44,9 +44,9 @@ class Printer:
         bitmap = generate_qr_bitmap(data)
         self._conn.write(build_print_command(bitmap))
 
-    def print_image(self, path: str) -> None:
+    def print_image(self, path: str, dither: bool = True) -> None:
         image = Image.open(path)
-        bitmap = to_gray4_bitmap(image)
+        bitmap = to_gray4_bitmap(image, dither=dither)
         self._conn.write(build_print_command(bitmap))
 
     def __enter__(self) -> "Printer":
