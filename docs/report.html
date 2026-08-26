@@ -434,7 +434,7 @@
         <tbody>
           <tr>
             <td>Bluetooth Low Energy（<code>bleak</code>で実装）</td>
-            <td>デバイス名に "BLE" を含むが、実データ通信は <strong>Bluetooth Classic（RFCOMM/SPP）</strong>。ATT/GATTパケットは全キャプチャ中0件</td>
+            <td>Android側では"BLE"を含む名前（<code>PPS1_DD4C_BLE</code>）で見えるが、実データ通信は <strong>Bluetooth Classic（RFCOMM/SPP）</strong>。ATT/GATTパケットは全キャプチャ中0件。Windows側のペアリング済み一覧では"_BLE"接尾辞なしの<code>PPS1_DD4C</code>と表示される</td>
             <td>Python標準の <code>socket.AF_BLUETOOTH</code>（Windowsでは <code>pyserial</code>経由のCOMポート接続）に変更</td>
           </tr>
           <tr>

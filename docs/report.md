@@ -35,7 +35,7 @@
 
 | 手順書の前提 | 実際の調査結果 | 対応 |
 |---|---|---|
-| Bluetooth Low Energy（`bleak`で実装） | デバイス名に "BLE" を含むが、実データ通信は **Bluetooth Classic（RFCOMM/SPP）**。ATT/GATTパケットは全キャプチャ中0件 | Python標準の`socket.AF_BLUETOOTH`（Windowsでは`pyserial`経由のCOMポート接続）に変更 |
+| Bluetooth Low Energy（`bleak`で実装） | Android側では"BLE"を含む名前（`PPS1_DD4C_BLE`）で見えるが、実データ通信は **Bluetooth Classic（RFCOMM/SPP）**。ATT/GATTパケットは全キャプチャ中0件。なおWindows側のペアリング済み一覧では"_BLE"接尾辞なしの`PPS1_DD4C`と表示される | Python標準の`socket.AF_BLUETOOTH`（Windowsでは`pyserial`経由のCOMポート接続）に変更 |
 | Wiresharkで手動解析 | btsnoopログを直接アップロードしてもらい、自作Pythonパーサーで解析する方が高速・確実だった | `tools/btsnoop_parser/` を新規実装 |
 | 文字とQRの通信を比較して判定 | 専用アプリにQR機能が(当初は)見当たらず、後に「ノートエディタ」内に発見。最終的に両方とも同一の画像プロトコルと確認 | QRは専用コマンドなしと結論、画像プロトコルに統一 |
 | 画像テスト(白/黒ドット/線/四角)で画像仕様を特定 | 解析用端末(Android 7.0)の性能不足で画像メニューが開けず未実施 | ビットマップ通信解析に加え、**本物のアプリのAPKを逆コンパイル**して画像エンコード処理のソースコードを直接確認する手法に切り替え |
