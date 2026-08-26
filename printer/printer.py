@@ -17,7 +17,7 @@
 from PIL import Image
 
 from .bluetooth import PrinterConnection
-from .image import text_to_bitmap, to_1bit_bitmap
+from .image import text_to_bitmap, to_gray4_bitmap
 from .protocol import build_print_command
 from .qr import generate_qr_bitmap
 
@@ -46,7 +46,7 @@ class Printer:
 
     def print_image(self, path: str) -> None:
         image = Image.open(path)
-        bitmap = to_1bit_bitmap(image)
+        bitmap = to_gray4_bitmap(image)
         self._conn.write(build_print_command(bitmap))
 
     def __enter__(self) -> "Printer":

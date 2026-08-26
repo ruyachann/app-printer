@@ -6,7 +6,7 @@ captures/rfcomm_jobs/ の実キャプチャから、ヘッダー生成ロジッ�
 
 from pathlib import Path
 
-from printer.protocol import build_print_command, WIDTH_BYTES
+from printer.protocol import build_print_command, STRIDE
 
 CAPTURES_DIR = Path(__file__).resolve().parent.parent / "captures" / "rfcomm_jobs"
 
@@ -37,10 +37,10 @@ def test_build_print_command_reproduces_captured_bytes():
 
 
 def test_text_capture_bitmap_dimensions_are_consistent():
-    # このプリンターの1行テキストキャンバスは 384x92 (48 bytes/row x 92 rows) で固定
+    # このプリンターの1行テキストキャンバスは 384x23 (192 bytes/row x 23 rows) で固定
     for filename, _label in CAPTURE_SAMPLES:
         captured = _load_capture(filename)
         bitmap = captured[8:-10]
-        assert len(bitmap) % WIDTH_BYTES == 0
-        rows = len(bitmap) // WIDTH_BYTES
-        assert rows == 92
+        assert len(bitmap) % STRIDE == 0
+        rows = len(bitmap) // STRIDE
+        assert rows == 23

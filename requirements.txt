@@ -1,4 +1,5 @@
 pillow
 qrcode
+numpy
 pytest
 pyserial  # Windows等でBluetoothデバイスのドライバーが認識されず、COMポート経由での接続が必要な場合に使用

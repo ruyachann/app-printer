@@ -1,14 +1,13 @@
 """qr.py の単体テスト（実機不要）。"""
 
-from printer.protocol import WIDTH_BYTES
+from printer.protocol import STRIDE
 from printer.qr import generate_qr_bitmap
 
 
 def test_generate_qr_bitmap_dimensions():
     bitmap = generate_qr_bitmap("https://example.com")
-    assert len(bitmap) % WIDTH_BYTES == 0
-    rows = len(bitmap) // WIDTH_BYTES
-    assert rows % 4 == 0
+    assert len(bitmap) % STRIDE == 0
+    assert len(bitmap) // STRIDE > 0
 
 
 def test_generate_qr_bitmap_has_black_pixels():

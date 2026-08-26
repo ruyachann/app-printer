@@ -1,52 +1,58 @@
-"""画像・テキストをプリンター用1bitビットマップに変換するモジュール。
+"""画像・テキストをプリンター用4階調グレースケールビットマップに変換するモジュール。
 
-docs/protocol_spec.md の確定仕様: 幅384px（48 bytes/row）、1bit、MSBファースト、bit=1が黒。
-行数（高さ）は4の倍数である必要がある（protocol.build_print_command 参照）。
+docs/protocol_spec.md の確定仕様: 幅384px、1バイトに2画素（4bit/画素、値0〜3）、
+192バイト/行。詳細は protocol.py のモジュールdocstring参照。
 
-【重要・未解決の既知の問題】このモジュールが生成したビットマップは、実機で複数行にわたる
-横4分割の症状を起こす可能性がある（qr.py のdocstring、docs/protocol_spec.md の
-「既知の未解決問題」を参照）。text_to_bitmap()は内容が単純なため実用上読める大きさで
-印字できることを実機で確認しているが、理論上は同じ問題の影響を受けている可能性が高い。
-to_1bit_bitmap()を使う写真等の画像印刷（printer.print_image）は未検証。
+【2026-08-26】以前このモジュールは「1bit白黒」として実装されており、これが自前生成画像が
+紙面に横4分割されて印字される既知の不具合の根本原因だった（APK逆コンパイルにより判明）。
+正しい4階調グレースケール形式に全面的に修正済み。
 """
 
+import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 
-from .protocol import WIDTH_BYTES, WIDTH_PX
+from .protocol import GRAY_LEVELS, STRIDE, WIDTH_PX
+
+_MAX_LEVEL = GRAY_LEVELS - 1  # 3
+_STEP = 255.0 / _MAX_LEVEL
 
 
-def _pad_height_to_multiple_of_4(img: Image.Image, fill: int = 255) -> Image.Image:
-    height = img.height
-    remainder = height % 4
-    if remainder == 0:
-        return img
-    pad = 4 - remainder
-    padded = Image.new("L", (img.width, height + pad), fill)
-    padded.paste(img, (0, 0))
-    return padded
-
-
-def to_1bit_bitmap(image: Image.Image, dither: bool = True) -> bytes:
-    """PIL画像をプリンター用1bitビットマップに変換する（幅384pxにリサイズ）。"""
+def to_gray4_bitmap(image: Image.Image, dither: bool = False) -> bytes:
+    """PIL画像をプリンター用4階調グレースケールビットマップに変換する（幅384pxにリサイズ）。"""
     if image.width != WIDTH_PX:
         ratio = WIDTH_PX / image.width
         new_height = max(1, round(image.height * ratio))
         image = image.resize((WIDTH_PX, new_height))
 
     gray = image.convert("L")
-    gray = _pad_height_to_multiple_of_4(gray)
+    height = gray.height
+    arr = np.asarray(gray, dtype=np.float64).copy()
 
-    method = Image.Dither.FLOYDSTEINBERG if dither else Image.Dither.NONE
-    mono = gray.convert("1", dither=method)  # PIL: 1=white, 0=black
+    if dither:
+        for y in range(height):
+            for x in range(WIDTH_PX):
+                old = arr[y, x]
+                level = min(_MAX_LEVEL, max(0, round(old / _STEP)))
+                new_val = level * _STEP
+                err = old - new_val
+                arr[y, x] = new_val
+                if x + 1 < WIDTH_PX:
+                    arr[y, x + 1] += err * 7 / 16
+                if y + 1 < height:
+                    if x - 1 >= 0:
+                        arr[y + 1, x - 1] += err * 3 / 16
+                    arr[y + 1, x] += err * 5 / 16
+                    if x + 1 < WIDTH_PX:
+                        arr[y + 1, x + 1] += err * 1 / 16
 
-    out = bytearray(WIDTH_BYTES * mono.height)
-    px = mono.load()
-    for y in range(mono.height):
-        row_offset = y * WIDTH_BYTES
-        for x in range(WIDTH_PX):
-            if px[x, y] == 0:  # black pixel
-                out[row_offset + (x // 8)] |= 0x80 >> (x % 8)
-    return bytes(out)
+    levels = np.clip(np.round(arr / _STEP), 0, _MAX_LEVEL).astype(np.uint8)
+    nibbles = _MAX_LEVEL - levels  # 明るい(白)=0, 暗い(黒)=_MAX_LEVEL
+
+    hi = nibbles[:, 0::2]
+    lo = nibbles[:, 1::2]
+    packed = (hi << 4) | lo
+    assert packed.shape[1] == STRIDE
+    return packed.tobytes()
 
 
 DEFAULT_FONT_SIZE = 72  # 実機テストで56pxは読めるが小さめとのフィードバックを受けて拡大
@@ -104,7 +110,7 @@ def _wrap_line(line: str, font: ImageFont.ImageFont, draw: ImageDraw.ImageDraw, 
 
 def text_to_bitmap(text: str, font: ImageFont.ImageFont | None = None, font_size: int = DEFAULT_FONT_SIZE,
                     line_spacing: int = 4, margin: int = 4) -> bytes:
-    """文字列を描画して1bitビットマップに変換する（幅384pxに収まるよう自動折り返し）。"""
+    """文字列を描画して4階調グレースケールビットマップに変換する（幅384pxに収まるよう自動折り返し）。"""
     if font is None:
         font = _load_default_japanese_capable_font(font_size)
 
@@ -126,4 +132,4 @@ def text_to_bitmap(text: str, font: ImageFont.ImageFont | None = None, font_size
         draw.text((margin, y), line, fill=0, font=font)
         y += h + line_spacing
 
-    return to_1bit_bitmap(canvas, dither=False)
+    return to_gray4_bitmap(canvas, dither=False)
